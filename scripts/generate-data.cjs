@@ -228,7 +228,7 @@ for (const cityFixed of CITIES) { for (let i = 0; i < PER_CITY; i++) {
     banner: realRestaurantImage({ id, cuisines, name }, 1200, 480),
     menu,
   });
-}
+}}
 
 const CATEGORIES = [
   { name: "North Indian", image: realCategoryImage("North Indian") },
