@@ -12,6 +12,7 @@ import ProtectedRoute from "./components/ProtectedRoute.jsx";
 import { EmptyState } from "./components/Misc.jsx";
 import Navbar from "./components/Navbar.jsx";
 import Footer from "./components/Footer.jsx";
+import AiAssistant from "./components/AiAssistant.jsx";
 
 function NotFound() {
   return (
@@ -25,6 +26,7 @@ function NotFound() {
 
 export default function App() {
   return (
+    <>
     <Routes>
       <Route path="/" element={<Landing />} />
       <Route path="/restaurants" element={<RestaurantListing />} />
@@ -53,5 +55,7 @@ export default function App() {
       />
       <Route path="*" element={<NotFound />} />
     </Routes>
+    <AiAssistant />
+    </>
   );
 }
