@@ -186,9 +186,9 @@ function makeMenu(restaurantId, cuisines, color) {
 }
 
 const restaurants = [];
-const TARGET = 54;
+const PER_CITY = 20;
 
-for (let i = 0; i < TARGET; i++) {
+for (const cityFixed of CITIES) { for (let i = 0; i < PER_CITY; i++) {
   const numCuisines = Math.random() < 0.25 ? 2 : 1;
   const cuisines = pickN(CUISINES, numCuisines);
   const name = makeRestaurantName();
@@ -202,7 +202,7 @@ for (let i = 0; i < TARGET; i++) {
   const hasOffer = Math.random() < 0.45;
   const offerText = hasOffer ? pick(["50% OFF up to ₹100", "Flat ₹125 OFF above ₹399", "Free delivery", "20% OFF up to ₹80", "Buy 1 Get 1 Free"]) : null;
   const openNow = Math.random() < 0.85;
-  const city = pick(CITIES);
+  const city = cityFixed;
 
   const menu = makeMenu(id, cuisines, color);
   const popularDishes = pickN(menu, Math.min(3, menu.length)).map((d) => d.name);
