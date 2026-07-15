@@ -34327,3 +34327,7 @@ export const restaurants = [
 export const allMenuItems = restaurants.flatMap((r) =>
   r.menu.map((item) => ({ ...item, restaurantName: r.name, restaurantSlug: r.slug }))
 );
+
+export const allCuisines = Array.from(
+  new Set(restaurants.flatMap((r) => r.cuisines))
+).sort();
