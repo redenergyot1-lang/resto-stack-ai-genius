@@ -83,7 +83,7 @@ export default function DishCard({ dish, restaurant, highlightQuery = "" }) {
         <Thumbnail src={dish.image} alt={dish.name} aspect="aspect-[4/3.4]" rounded="rounded-xl" className="w-28" />
         {dish.available && (
           cartItem ? (
-            <div className="flex items-center gap-2 bg-gold-600 text-white rounded-lg px-2 py-1.5 w-full justify-center -mt-3 shadow-card">
+            <div className="flex items-center gap-2 bg-gold-600 text-white rounded-lg px-2 py-1.5 w-full justify-center shadow-card">
               <button onClick={() => setQty(dish.id, cartItem.qty - 1)} aria-label="Decrease quantity">
                 <Minus size={14} />
               </button>
@@ -95,7 +95,7 @@ export default function DishCard({ dish, restaurant, highlightQuery = "" }) {
           ) : (
             <button
               onClick={() => addItem(dish, restaurant)}
-              className="flex items-center gap-1 bg-white border border-gold-600 text-gold-600 font-semibold text-sm px-4 py-1.5 rounded-lg -mt-3 shadow-card hover:bg-gold-50 transition-colors w-full justify-center"
+              className="flex items-center gap-1 bg-white border border-gold-600 text-gold-600 font-semibold text-sm px-4 py-1.5 rounded-lg shadow-card hover:bg-gold-50 transition-colors w-full justify-center"
             >
               <Plus size={14} /> Add
             </button>
