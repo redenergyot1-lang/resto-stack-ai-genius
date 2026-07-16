@@ -12,9 +12,9 @@ export default function RestaurantCard({ restaurant }) {
   return (
     <Link
       to={`/restaurant/${r.slug}`}
-      className="group block rounded-2xl overflow-hidden bg-white shadow-card hover:shadow-cardHover transition-shadow duration-300"
+      className="group flex flex-col h-full rounded-2xl overflow-hidden bg-white shadow-card hover:shadow-cardHover transition-shadow duration-300"
     >
-      <div className="relative">
+      <div className="relative shrink-0">
         <Thumbnail
           src={r.image}
           alt={r.name}
@@ -50,15 +50,17 @@ export default function RestaurantCard({ restaurant }) {
           <Heart size={13} className={saved ? "fill-red-500 text-red-500" : "text-ink-500"} />
         </button>
       </div>
-      <div className="p-4">
-        <div className="flex items-start justify-between gap-2">
-          <h3 className="font-display font-semibold text-base text-ink-900 leading-snug truncate">
+      <div className="p-4 flex-1 flex flex-col">
+        <div className="flex items-start justify-between gap-3">
+          <h3 className="font-display font-semibold text-base text-ink-900 leading-snug line-clamp-1 min-w-0 flex-1">
             {r.name}
           </h3>
-          <StarRating rating={r.rating} size={14} />
+          <div className="shrink-0">
+            <StarRating rating={r.rating} size={14} />
+          </div>
         </div>
         <p className="text-sm text-ink-300 mt-1 truncate">{r.cuisines.join(", ")} · {r.city}</p>
-        <div className="flex items-center gap-3 mt-2.5 text-sm text-ink-500">
+        <div className="flex items-center gap-3 mt-auto pt-2.5 text-sm text-ink-500">
           <span className="inline-flex items-center gap-1">
             <Clock size={13} /> {r.deliveryTime} min
           </span>
