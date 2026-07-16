@@ -107,7 +107,6 @@ export default function Navbar({ transparent = false }) {
         </div>
       </div>
 
-      {locationOpen && <LocationModal onClose={() => setLocationOpen(false)} />}
     </header>
   );
 }
