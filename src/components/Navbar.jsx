@@ -1,10 +1,9 @@
 import { Link, useNavigate } from "react-router-dom";
-import { ShoppingBag, User, LogOut, Search, MapPin, ChevronDown } from "lucide-react";
+import { ShoppingBag, User, LogOut, Search } from "lucide-react";
 import { useState, useRef, useEffect } from "react";
 import { useAuth } from "../context/AuthContext.jsx";
 import { useCart } from "../context/CartContext.jsx";
-import { useDeliveryLocation } from "../context/LocationContext.jsx";
-import LocationModal from "./LocationModal.jsx";
+
 
 // Navbar is always a dark "ink" surface now (in `transparent` mode it sits
 // directly on the hero photo instead of a solid fill) so the gold wordmark
@@ -14,9 +13,7 @@ import LocationModal from "./LocationModal.jsx";
 export default function Navbar({ transparent = false }) {
   const { isAuthenticated, user, logout } = useAuth();
   const { totals } = useCart();
-  const { city } = useDeliveryLocation();
   const [menuOpen, setMenuOpen] = useState(false);
-  const [locationOpen, setLocationOpen] = useState(false);
   const navigate = useNavigate();
   const ref = useRef(null);
 
@@ -30,10 +27,10 @@ export default function Navbar({ transparent = false }) {
 
   return (
     <header
-      className={`sticky top-0 z-50 ${
+      className={`top-0 z-50 ${
         transparent
-          ? "absolute w-full bg-gradient-to-b from-ink-900/85 via-ink-900/55 to-transparent backdrop-blur-[2px]"
-          : "bg-ink-900 border-b border-white/10"
+          ? "absolute w-full bg-transparent"
+          : "sticky bg-ink-900 border-b border-white/10"
       }`}
     >
       <div className="max-w-7xl mx-auto px-5 sm:px-8 h-[72px] flex items-center justify-between gap-3 sm:gap-4">
@@ -44,24 +41,7 @@ export default function Navbar({ transparent = false }) {
           </span>
         </Link>
 
-        <button
-          onClick={() => setLocationOpen(true)}
-          className="hidden md:flex items-center gap-1.5 px-3 py-1.5 rounded-full text-white/90 hover:bg-white/10 transition-colors min-w-0 max-w-[220px]"
-        >
-          <MapPin size={16} className="text-gold-300 shrink-0" />
-          <span className="text-sm font-medium truncate">{city}</span>
-          <ChevronDown size={14} className="text-white/60 shrink-0" />
-        </button>
-
         <div className="flex items-center gap-2 sm:gap-4 shrink-0">
-          <button
-            onClick={() => setLocationOpen(true)}
-            className="md:hidden p-2 rounded-full text-white hover:bg-white/10 transition-colors"
-            aria-label={`Delivery location: ${city}. Change location`}
-          >
-            <MapPin size={20} />
-          </button>
-
           <button
             onClick={() => navigate("/restaurants")}
             className="p-2 rounded-full text-white hover:bg-white/10 transition-colors"
@@ -127,7 +107,6 @@ export default function Navbar({ transparent = false }) {
         </div>
       </div>
 
-      {locationOpen && <LocationModal onClose={() => setLocationOpen(false)} />}
     </header>
   );
 }
