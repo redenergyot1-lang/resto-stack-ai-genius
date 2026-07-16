@@ -31,7 +31,9 @@ export default function Navbar({ transparent = false }) {
   return (
     <header
       className={`sticky top-0 z-50 ${
-        transparent ? "bg-transparent absolute w-full" : "bg-ink-900 border-b border-white/10"
+        transparent
+          ? "absolute w-full bg-gradient-to-b from-ink-900/85 via-ink-900/55 to-transparent backdrop-blur-[2px]"
+          : "bg-ink-900 border-b border-white/10"
       }`}
     >
       <div className="max-w-7xl mx-auto px-5 sm:px-8 h-[72px] flex items-center justify-between gap-3 sm:gap-4">
