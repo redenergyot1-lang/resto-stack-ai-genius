@@ -14,31 +14,34 @@ export default function Thumbnail({
   className = "",
   imgClassName = "",
   loading = "lazy",
+  fallback = "https://images.unsplash.com/photo-1504674900247-0877df9cc836?auto=format&fit=crop&w=640&h=480&q=80",
 }) {
   const [status, setStatus] = useState("loading"); // loading | loaded | error
+  const [currentSrc, setCurrentSrc] = useState(src || fallback);
 
   return (
     <div className={`relative overflow-hidden ${aspect} ${rounded} ${className}`}>
       {status !== "loaded" && (
         <div className={`absolute inset-0 skeleton ${rounded}`} aria-hidden="true" />
       )}
-      {status === "error" ? (
-        <div className="absolute inset-0 flex items-center justify-center bg-cream-200 text-ink-300 text-xs font-medium">
-          {alt || "Image unavailable"}
-        </div>
-      ) : (
-        <img
-          src={src}
-          alt={alt}
-          loading={loading}
-          decoding="async"
-          onLoad={() => setStatus("loaded")}
-          onError={() => setStatus("error")}
-          className={`w-full h-full object-cover transition-opacity duration-500 ${
-            status === "loaded" ? "opacity-100" : "opacity-0"
-          } ${imgClassName}`}
-        />
-      )}
+      <img
+        src={currentSrc}
+        alt={alt}
+        loading={loading}
+        decoding="async"
+        onLoad={() => setStatus("loaded")}
+        onError={() => {
+          if (currentSrc !== fallback) {
+            setCurrentSrc(fallback);
+            setStatus("loading");
+          } else {
+            setStatus("error");
+          }
+        }}
+        className={`w-full h-full object-cover transition-opacity duration-500 ${
+          status === "loaded" ? "opacity-100" : "opacity-0"
+        } ${imgClassName}`}
+      />
     </div>
   );
 }
