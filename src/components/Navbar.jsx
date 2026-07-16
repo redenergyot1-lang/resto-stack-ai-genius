@@ -13,9 +13,7 @@ import LocationModal from "./LocationModal.jsx";
 export default function Navbar({ transparent = false }) {
   const { isAuthenticated, user, logout } = useAuth();
   const { totals } = useCart();
-  const { city } = useDeliveryLocation();
   const [menuOpen, setMenuOpen] = useState(false);
-  const [locationOpen, setLocationOpen] = useState(false);
   const navigate = useNavigate();
   const ref = useRef(null);
 
