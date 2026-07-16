@@ -1,9 +1,8 @@
 import { Link, useNavigate } from "react-router-dom";
-import { ShoppingBag, User, LogOut, Search, MapPin, ChevronDown } from "lucide-react";
+import { ShoppingBag, User, LogOut, Search } from "lucide-react";
 import { useState, useRef, useEffect } from "react";
 import { useAuth } from "../context/AuthContext.jsx";
 import { useCart } from "../context/CartContext.jsx";
-import { useDeliveryLocation } from "../context/LocationContext.jsx";
 import LocationModal from "./LocationModal.jsx";
 
 // Navbar is always a dark "ink" surface now (in `transparent` mode it sits
