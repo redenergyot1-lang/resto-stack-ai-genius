@@ -3,7 +3,7 @@ import { ShoppingBag, User, LogOut, Search } from "lucide-react";
 import { useState, useRef, useEffect } from "react";
 import { useAuth } from "../context/AuthContext.jsx";
 import { useCart } from "../context/CartContext.jsx";
-import LocationModal from "./LocationModal.jsx";
+
 
 // Navbar is always a dark "ink" surface now (in `transparent` mode it sits
 // directly on the hero photo instead of a solid fill) so the gold wordmark
