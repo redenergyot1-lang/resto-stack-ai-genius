@@ -52,7 +52,7 @@ export default function Dashboard() {
 
         <section>
           {tab === "profile" && <ProfileTab user={user} />}
-          {tab === "orders" && <OrdersTab />}
+          {tab === "orders" && <OrdersTab user={user} />}
           {tab === "addresses" && <AddressesTab />}
           {tab === "wishlist" && <WishlistTab />}
           {tab === "reviews" && <ReviewsTab />}
@@ -92,19 +92,27 @@ function ProfileTab({ user }) {
   );
 }
 
-function OrdersTab() {
-  if (MOCK_ORDERS.length === 0) {
+function OrdersTab({ user }) {
+  const [orders, setOrders] = useState([]);
+  useEffect(() => {
+    if (!user) return;
+    import("../integrations/supabase/client").then(({ supabase }) => {
+      supabase.from("orders").select("*").eq("user_id", user.id).order("created_at", { ascending: false })
+        .then(({ data }) => setOrders(data || []));
+    });
+  }, [user]);
+  if (orders.length === 0) {
     return <EmptyState icon={Package} title="No orders yet" subtitle="Your past orders will show up here." />;
   }
   return (
     <Card>
       <h2 className="font-display text-xl font-bold text-ink-900 mb-5">Order History</h2>
       <div className="divide-y divide-ink-900/8">
-        {MOCK_ORDERS.map((o) => (
+        {orders.map((o) => (
           <div key={o.id} className="flex items-center justify-between py-4 flex-wrap gap-2">
             <div>
-              <p className="font-medium text-ink-900">{o.restaurant}</p>
-              <p className="text-xs text-ink-300 mt-0.5">{o.id} · {o.items} items · {o.date}</p>
+              <p className="font-medium text-ink-900">{o.restaurant_name}</p>
+              <p className="text-xs text-ink-300 mt-0.5">{o.id.slice(0, 8)} · {new Date(o.created_at).toLocaleDateString("en-IN")}</p>
             </div>
             <div className="text-right">
               <p className="font-semibold text-ink-900">₹{o.total}</p>
@@ -191,6 +199,7 @@ function AddressesTab() {
 
 function WishlistTab() {
   const { ids, remove } = useWishlist();
+  const { restaurants } = useData();
   const favourites = restaurants.filter((r) => ids.includes(r.id));
   return (
     <Card>
@@ -230,6 +239,7 @@ function WishlistTab() {
 
 function ReviewsTab() {
   const userReviews = loadJSON("restostack_user_reviews", {});
+  const { restaurants } = useData();
   const flat = Object.entries(userReviews).flatMap(([entityId, reviews]) =>
     reviews.map((r) => {
       // Dish ids look like "D123", restaurant ids look like "R12" — used
