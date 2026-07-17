@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Search, MapPin, Loader2 } from "lucide-react";
-import { restaurants, allMenuItems, allCuisines } from "../data/restaurants.js";
+import { useData } from "../context/DataContext.jsx";
 import { useDeliveryLocation } from "../context/LocationContext.jsx";
 import LocationModal from "./LocationModal.jsx";
 import VegBadge from "./VegBadge.jsx";
@@ -10,6 +10,7 @@ import { highlightMatch as highlight } from "../utils/highlight.jsx";
 
 export default function SearchBar({ variant = "hero", city, onCityClick }) {
   const { city: selectedCity, hasCoverage } = useDeliveryLocation();
+  const { restaurants, allMenuItems, allCuisines } = useData();
   const displayCity = city || selectedCity;
   const [query, setQuery] = useState("");
   const [open, setOpen] = useState(false);
@@ -47,16 +48,16 @@ export default function SearchBar({ variant = "hero", city, onCityClick }) {
   // place the person can't actually order from.
   const cityHasRestaurants = useMemo(
     () => restaurants.some((r) => r.city === displayCity),
-    [displayCity]
+    [displayCity, restaurants]
   );
   const showingFallback = hasCoverage === false || !cityHasRestaurants;
   const scopedRestaurants = useMemo(
     () => (showingFallback ? restaurants : restaurants.filter((r) => r.city === displayCity)),
-    [showingFallback, displayCity]
+    [showingFallback, displayCity, restaurants]
   );
   const scopedDishes = useMemo(
     () => (showingFallback ? allMenuItems : allMenuItems.filter((d) => scopedRestaurants.some((r) => r.slug === d.restaurantSlug))),
-    [showingFallback, scopedRestaurants]
+    [showingFallback, scopedRestaurants, allMenuItems]
   );
 
   const results = useMemo(() => {
@@ -79,7 +80,7 @@ export default function SearchBar({ variant = "hero", city, onCityClick }) {
       )
       .slice(0, 5);
     return { restos, dishes, cuisines };
-  }, [query, scopedRestaurants, scopedDishes]);
+  }, [query, scopedRestaurants, scopedDishes, allCuisines]);
 
   const isEmpty =
     query && !loading && results.restos.length === 0 && results.dishes.length === 0 && results.cuisines.length === 0;
