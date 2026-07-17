@@ -9,26 +9,27 @@ import VegBadge from "../components/VegBadge.jsx";
 import Thumbnail from "../components/Thumbnail.jsx";
 import { EmptyState } from "../components/Misc.jsx";
 import { useDeliveryLocation } from "../context/LocationContext.jsx";
-import { restaurants, allMenuItems, allCuisines } from "../data/restaurants.js";
+import { useData } from "../context/DataContext.jsx";
 import { highlightMatch } from "../utils/highlight.jsx";
 
 export default function SearchResults() {
   const [params] = useSearchParams();
   const { city, hasCoverage } = useDeliveryLocation();
+  const { restaurants, allMenuItems, allCuisines } = useData();
   const q = (params.get("q") || "").trim();
   const ql = q.toLowerCase();
 
-  const cityHasRestaurants = useMemo(() => restaurants.some((r) => r.city === city), [city]);
+  const cityHasRestaurants = useMemo(() => restaurants.some((r) => r.city === city), [city, restaurants]);
   const showingFallback = hasCoverage === false || !cityHasRestaurants;
   const scopedRestaurants = showingFallback ? restaurants : restaurants.filter((r) => r.city === city);
   const scopedDishes = useMemo(
     () => allMenuItems.filter((d) => scopedRestaurants.some((r) => r.slug === d.restaurantSlug)),
-    [scopedRestaurants]
+    [scopedRestaurants, allMenuItems]
   );
 
   const matchedCuisines = useMemo(
     () => (ql ? allCuisines.filter((c) => c.name.toLowerCase().includes(ql)) : []),
-    [ql]
+    [ql, allCuisines]
   );
 
   const matchedRestaurants = useMemo(
