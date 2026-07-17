@@ -9,6 +9,7 @@ import { EmptyState } from "../components/Misc.jsx";
 import { useAuth } from "../context/AuthContext.jsx";
 import { useWishlist } from "../context/WishlistContext.jsx";
 import { useData } from "../context/DataContext.jsx";
+import { supabase } from "../integrations/supabase/client";
 
 const TABS = [
   { id: "profile", label: "Profile", icon: User },
@@ -96,10 +97,8 @@ function OrdersTab({ user }) {
   const [orders, setOrders] = useState([]);
   useEffect(() => {
     if (!user) return;
-    import("../integrations/supabase/client").then(({ supabase }) => {
-      supabase.from("orders").select("*").eq("user_id", user.id).order("created_at", { ascending: false })
-        .then(({ data }) => setOrders(data || []));
-    });
+    supabase.from("orders").select("*").eq("user_id", user.id).order("created_at", { ascending: false })
+      .then(({ data }) => setOrders(data || []));
   }, [user]);
   if (orders.length === 0) {
     return <EmptyState icon={Package} title="No orders yet" subtitle="Your past orders will show up here." />;
