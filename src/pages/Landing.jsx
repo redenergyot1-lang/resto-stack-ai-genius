@@ -8,10 +8,11 @@ import RestaurantCard from "../components/RestaurantCard.jsx";
 import { CategoryCircle, EmptyState } from "../components/Misc.jsx";
 import LocationModal from "../components/LocationModal.jsx";
 import { useDeliveryLocation } from "../context/LocationContext.jsx";
-import { categories, restaurants } from "../data/restaurants.js";
+import { useData } from "../context/DataContext.jsx";
 
 export default function Landing() {
   const { city, hasCoverage } = useDeliveryLocation();
+  const { restaurants, categories } = useData();
   const [locationOpen, setLocationOpen] = useState(false);
 
   // Restaurant listings update to the selected delivery city. When the
@@ -20,7 +21,7 @@ export default function Landing() {
   // catalog with a callout, rather than rendering a dead, empty homepage.
   const cityRestaurants = useMemo(
     () => restaurants.filter((r) => r.city === city),
-    [city]
+    [city, restaurants]
   );
   const showingFallback = hasCoverage === false || cityRestaurants.length === 0;
   const baseList = showingFallback ? restaurants : cityRestaurants;
