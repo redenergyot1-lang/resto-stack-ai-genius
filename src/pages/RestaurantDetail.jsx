@@ -11,7 +11,7 @@ import RestaurantReviews from "../components/RestaurantReviews.jsx";
 import { FilterChip } from "../components/FilterBar.jsx";
 import { EmptyState } from "../components/Misc.jsx";
 import { useWishlist } from "../context/WishlistContext.jsx";
-import { restaurants } from "../data/restaurants.js";
+import { useData } from "../context/DataContext.jsx";
 import { UtensilsCrossed } from "lucide-react";
 
 const MENU_SORTS = [
@@ -34,6 +34,7 @@ const DEFAULT_MENU_FILTERS = { veg: false, nonVeg: false, bestseller: false, top
 
 export default function RestaurantDetail() {
   const { slug } = useParams();
+  const { restaurants, loading } = useData();
   const restaurant = restaurants.find((r) => r.slug === slug);
   const { isSaved, toggle: toggleWishlist } = useWishlist();
   const [menuFilters, setMenuFilters] = useState(DEFAULT_MENU_FILTERS);
@@ -83,6 +84,16 @@ export default function RestaurantDetail() {
         d.description.toLowerCase().includes(q)
     );
   }, [filteredMenu, menuQuery]);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex flex-col">
+        <Navbar />
+        <div className="flex-1 flex items-center justify-center text-ink-300">Loading…</div>
+        <Footer />
+      </div>
+    );
+  }
 
   if (!restaurant) {
     return (

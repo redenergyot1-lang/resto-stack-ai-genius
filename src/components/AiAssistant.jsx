@@ -4,6 +4,7 @@ import { MessageCircle, X, Send, Sparkles, Loader2 } from "lucide-react";
 import { supabase } from "../integrations/supabase/client";
 import { useCart } from "../context/CartContext.jsx";
 import { useDeliveryLocation } from "../context/LocationContext.jsx";
+import { useData } from "../context/DataContext.jsx";
 import { buildAiContext, findDish, findRestaurantBySlug } from "../lib/aiContext.js";
 
 const WELCOME = {
@@ -21,9 +22,10 @@ export default function AiAssistant() {
   const navigate = useNavigate();
   const { addItem, removeItem, setQty, clearCart, items } = useCart();
   const { city } = useDeliveryLocation();
+  const { restaurants } = useData();
 
-  // Build context once per city (compact JSON of that city's data).
-  const context = useMemo(() => buildAiContext(city), [city]);
+  // Build context per city + catalog load (compact JSON of that city's data).
+  const context = useMemo(() => buildAiContext(restaurants, city), [restaurants, city]);
 
   useEffect(() => {
     if (scrollRef.current) scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
@@ -41,7 +43,7 @@ export default function AiAssistant() {
     const name = call.function.name;
 
     if (name === "add_to_cart") {
-      const found = findDish(args.dishId || args.query || "");
+      const found = findDish(restaurants, args.dishId || args.query || "");
       if (!found) return `I couldn't find that dish in the catalog.`;
       const qty = Math.max(1, Number(args.quantity) || 1);
       for (let i = 0; i < qty; i++) addItem(found.dish, found.restaurant);
@@ -71,7 +73,7 @@ export default function AiAssistant() {
       const t = String(args.target || "").toLowerCase();
       if (t === "cart" || t === "checkout") { navigate("/cart"); return "Opening your cart."; }
       if (t === "restaurants") { navigate("/restaurants"); return "Showing all restaurants."; }
-      const r = findRestaurantBySlug(t);
+      const r = findRestaurantBySlug(restaurants, t);
       if (r) { navigate(`/restaurant/${r.slug}`); return `Opening ${r.name}.`; }
       return "I couldn't find that page.";
     }

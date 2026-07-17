@@ -1,40 +1,52 @@
 import { createContext, useContext, useEffect, useState } from "react";
+import { supabase } from "../integrations/supabase/client";
+import { useAuth } from "./AuthContext.jsx";
 
-// Mirrors CartContext's shape/persistence pattern so it's an easy drop-in
-// swap for a real `GET/POST/DELETE /api/wishlist` API later:
-//   list    -> GET  /api/wishlist
-//   toggle  -> POST /api/wishlist/:restaurantId  or DELETE if already saved
 const WishlistContext = createContext(null);
 const STORAGE_KEY = "restostack_wishlist";
 
 export function WishlistProvider({ children }) {
+  const { user } = useAuth();
   const [ids, setIds] = useState([]);
 
   useEffect(() => {
-    try {
-      const raw = JSON.parse(localStorage.getItem(STORAGE_KEY));
-      if (Array.isArray(raw)) setIds(raw);
-    } catch {
-      /* ignore corrupt storage */
+    if (!user) {
+      try {
+        const raw = JSON.parse(localStorage.getItem(STORAGE_KEY));
+        setIds(Array.isArray(raw) ? raw : []);
+      } catch { setIds([]); }
+      return;
     }
-  }, []);
-
-  useEffect(() => {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(ids));
-  }, [ids]);
+    (async () => {
+      const { data } = await supabase.from("wishlist").select("restaurant_id").eq("user_id", user.id);
+      setIds((data || []).map((r) => r.restaurant_id));
+    })();
+  }, [user]);
 
   function isSaved(restaurantId) {
     return ids.includes(restaurantId);
   }
 
-  function toggle(restaurantId) {
-    setIds((prev) =>
-      prev.includes(restaurantId) ? prev.filter((id) => id !== restaurantId) : [...prev, restaurantId]
-    );
+  async function toggle(restaurantId) {
+    const has = ids.includes(restaurantId);
+    const next = has ? ids.filter((id) => id !== restaurantId) : [...ids, restaurantId];
+    setIds(next);
+    if (user) {
+      if (has) await supabase.from("wishlist").delete().eq("user_id", user.id).eq("restaurant_id", restaurantId);
+      else await supabase.from("wishlist").insert({ user_id: user.id, restaurant_id: restaurantId });
+    } else {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
+    }
   }
 
-  function remove(restaurantId) {
-    setIds((prev) => prev.filter((id) => id !== restaurantId));
+  async function remove(restaurantId) {
+    const next = ids.filter((id) => id !== restaurantId);
+    setIds(next);
+    if (user) {
+      await supabase.from("wishlist").delete().eq("user_id", user.id).eq("restaurant_id", restaurantId);
+    } else {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
+    }
   }
 
   return (

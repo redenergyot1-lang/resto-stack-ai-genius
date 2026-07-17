@@ -1,88 +1,86 @@
 import { createContext, useContext, useEffect, useState } from "react";
+import { supabase } from "../integrations/supabase/client";
 
 const AuthContext = createContext(null);
 
-// NOTE: This is a mock auth layer that mimics the shape of a real JWT flow
-// so swapping in the Express + JWT backend later is a drop-in change:
-//   login(email, password) -> POST /api/auth/login -> { token, user }
-//   signup(payload)        -> POST /api/auth/signup -> { token, user }
-//   googleSignIn()         -> Google OAuth -> POST /api/auth/google
-const STORAGE_KEY = "restostack_auth";
-
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
-  const [token, setToken] = useState(null);
+  const [session, setSession] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if (raw) {
-      try {
-        const parsed = JSON.parse(raw);
-        setUser(parsed.user);
-        setToken(parsed.token);
-      } catch {
-        localStorage.removeItem(STORAGE_KEY);
-      }
-    }
-    setLoading(false);
-  }, []);
-
-  function persist(user, token) {
-    setUser(user);
-    setToken(token);
-    localStorage.setItem(STORAGE_KEY, JSON.stringify({ user, token }));
+  function toUser(session) {
+    if (!session?.user) return null;
+    const u = session.user;
+    const meta = u.user_metadata || {};
+    return {
+      id: u.id,
+      email: u.email,
+      name: meta.name || meta.full_name || (u.email ? u.email.split("@")[0] : "User"),
+      avatar: meta.avatar_url || null,
+    };
   }
 
+  useEffect(() => {
+    const { data: sub } = supabase.auth.onAuthStateChange((_e, s) => {
+      setSession(s);
+      setUser(toUser(s));
+    });
+    supabase.auth.getSession().then(({ data }) => {
+      setSession(data.session);
+      setUser(toUser(data.session));
+      setLoading(false);
+    });
+    return () => sub.subscription.unsubscribe();
+  }, []);
+
   async function login(email, password) {
-    // TODO: replace with axios.post('/api/auth/login', { email, password })
-    await new Promise((r) => setTimeout(r, 500));
-    if (!email || !password) throw new Error("Email and password are required.");
-    const mockUser = {
-      id: "U1",
-      name: email.split("@")[0].replace(/[._]/g, " "),
-      email,
-      avatar: null,
-    };
-    persist(mockUser, "mock-jwt-token");
-    return mockUser;
+    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+    if (error) throw new Error(error.message);
+    return toUser(data.session);
   }
 
   async function signup({ name, email, password }) {
-    // TODO: replace with axios.post('/api/auth/signup', { name, email, password })
-    await new Promise((r) => setTimeout(r, 500));
-    if (!name || !email || !password) throw new Error("All fields are required.");
-    const mockUser = { id: "U" + Date.now(), name, email, avatar: null };
-    persist(mockUser, "mock-jwt-token");
-    return mockUser;
+    const { data, error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: { emailRedirectTo: window.location.origin, data: { name } },
+    });
+    if (error) throw new Error(error.message);
+    return toUser(data.session);
   }
 
   async function googleSignIn() {
-    // TODO: replace with real Google OAuth flow -> POST /api/auth/google
-    await new Promise((r) => setTimeout(r, 500));
-    const mockUser = { id: "U-google", name: "Aarav Sharma", email: "aarav.sharma@gmail.com", avatar: null };
-    persist(mockUser, "mock-jwt-token-google");
-    return mockUser;
-  }
-
-  function logout() {
-    setUser(null);
-    setToken(null);
-    localStorage.removeItem(STORAGE_KEY);
-  }
-
-  function updateProfile(updates) {
-    // TODO: replace with axios.patch('/api/auth/me', updates)
-    setUser((prev) => {
-      const next = { ...prev, ...updates };
-      localStorage.setItem(STORAGE_KEY, JSON.stringify({ user: next, token }));
-      return next;
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: "google",
+      options: { redirectTo: window.location.origin },
     });
+    if (error) throw new Error(error.message);
+  }
+
+  async function logout() {
+    await supabase.auth.signOut();
+  }
+
+  async function updateProfile(updates) {
+    const { data, error } = await supabase.auth.updateUser({
+      email: updates.email,
+      data: { name: updates.name, avatar_url: updates.avatar },
+    });
+    if (error) throw new Error(error.message);
+    // Also sync profiles table if present
+    if (data?.user) {
+      await supabase.from("profiles").upsert({
+        id: data.user.id,
+        name: updates.name,
+        avatar_url: updates.avatar,
+      });
+      setUser((prev) => ({ ...prev, ...updates }));
+    }
   }
 
   return (
     <AuthContext.Provider
-      value={{ user, token, loading, login, signup, googleSignIn, logout, updateProfile, isAuthenticated: !!user }}
+      value={{ user, session, token: session?.access_token || null, loading, login, signup, googleSignIn, logout, updateProfile, isAuthenticated: !!user }}
     >
       {children}
     </AuthContext.Provider>
