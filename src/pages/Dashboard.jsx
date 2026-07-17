@@ -8,7 +8,7 @@ import Footer from "../components/Footer.jsx";
 import { EmptyState } from "../components/Misc.jsx";
 import { useAuth } from "../context/AuthContext.jsx";
 import { useWishlist } from "../context/WishlistContext.jsx";
-import { restaurants } from "../data/restaurants.js";
+import { useData } from "../context/DataContext.jsx";
 
 const TABS = [
   { id: "profile", label: "Profile", icon: User },
@@ -18,12 +18,6 @@ const TABS = [
   { id: "reviews", label: "My Reviews", icon: Star },
   { id: "support", label: "Support Tickets", icon: LifeBuoy },
   { id: "settings", label: "Account Settings", icon: Settings },
-];
-
-const MOCK_ORDERS = [
-  { id: "ORD10231", restaurant: restaurants[0]?.name, items: 3, total: 487, status: "Delivered", date: "2 days ago" },
-  { id: "ORD10198", restaurant: restaurants[3]?.name, items: 2, total: 312, status: "Delivered", date: "5 days ago" },
-  { id: "ORD10150", restaurant: restaurants[7]?.name, items: 4, total: 689, status: "Cancelled", date: "12 days ago" },
 ];
 
 function loadJSON(key, fallback) {
