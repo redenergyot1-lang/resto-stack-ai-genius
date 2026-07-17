@@ -8,12 +8,13 @@ import { RestaurantCardSkeleton, EmptyState } from "../components/Misc.jsx";
 import FiltersButton from "../components/FiltersButton.jsx";
 import { DEFAULT_FILTERS } from "../components/filterConfig.js";
 import { useDeliveryLocation } from "../context/LocationContext.jsx";
-import { restaurants, allCuisines } from "../data/restaurants.js";
+import { useData } from "../context/DataContext.jsx";
 import { MapPin, SearchX } from "lucide-react";
 
 export default function RestaurantListing() {
   const [params] = useSearchParams();
   const { city, hasCoverage } = useDeliveryLocation();
+  const { restaurants, allCuisines, loading: dataLoading } = useData();
   const [loading, setLoading] = useState(true);
   const [sort, setSort] = useState(params.get("sort") || "relevance");
   const [filters, setFilters] = useState({
@@ -23,15 +24,14 @@ export default function RestaurantListing() {
   });
 
   useEffect(() => {
-    const t = setTimeout(() => setLoading(false), 450);
-    return () => clearTimeout(t);
-  }, []);
+    setLoading(dataLoading);
+  }, [dataLoading]);
 
   // Every cuisine actually present across restaurants, not just the
   // curated "Culinary Journeys" categories shown on the landing page — a
   // few cuisines (e.g. Mughlai, Continental, Bakery & Cafe) only existed
   // as restaurant data and were missing from the filter dropdown otherwise.
-  const cuisineList = useMemo(() => allCuisines.map((c) => c.name), []);
+  const cuisineList = useMemo(() => allCuisines.map((c) => c.name), [allCuisines]);
 
   const cityHasRestaurants = useMemo(() => restaurants.some((r) => r.city === city), [city]);
   const showingFallback = hasCoverage === false || !cityHasRestaurants;
@@ -62,7 +62,7 @@ export default function RestaurantListing() {
       default: break;
     }
     return list;
-  }, [filters, sort, city, showingFallback]);
+  }, [filters, sort, city, showingFallback, restaurants]);
 
   return (
     <div className="min-h-screen flex flex-col">
