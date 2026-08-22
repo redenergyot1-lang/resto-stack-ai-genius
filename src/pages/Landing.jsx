@@ -1,5 +1,6 @@
-import { useMemo, useState } from "react";
-import { Link } from "react-router-dom";
+import { useMemo, useState, useEffect } from "react";
+import { Link, useLocation } from "react-router-dom";
+
 import { Star, Clock, Store, MapPin } from "lucide-react";
 import Navbar from "../components/Navbar.jsx";
 import Footer from "../components/Footer.jsx";
@@ -14,6 +15,16 @@ export default function Landing() {
   const { city, hasCoverage } = useDeliveryLocation();
   const { restaurants, categories } = useData();
   const [locationOpen, setLocationOpen] = useState(false);
+  const { hash } = useLocation();
+
+  // Navbar "Cuisines" link points at /#cuisines — scroll to the section
+  // when the hash is present (including navigations from other pages).
+  useEffect(() => {
+    if (hash !== "#cuisines") return;
+    const el = document.getElementById("cuisines");
+    if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
+  }, [hash, categories]);
+
 
   // Restaurant listings update to the selected delivery city. When the
   // chosen city has no partners yet (most of INDIAN_CITIES — only the 10
@@ -84,7 +95,7 @@ export default function Landing() {
       </div>
 
       <main className="flex-1 max-w-7xl mx-auto px-5 sm:px-8 w-full">
-        <section className="py-16">
+        <section id="cuisines" className="py-16 scroll-mt-24">
           <h2 className="font-display text-3xl sm:text-4xl font-bold text-ink-900 mb-10">Culinary Journeys</h2>
           <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-6 gap-x-4 gap-y-10">
             {categories.map((c) => (
