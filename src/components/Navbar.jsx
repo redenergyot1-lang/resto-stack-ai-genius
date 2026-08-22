@@ -12,11 +12,8 @@ const NAV_LINKS = [
 
 
 
-// Navbar is always a dark "ink" surface now (in `transparent` mode it sits
-// directly on the hero photo instead of a solid fill) so the gold wordmark
-// and crest logo always render against a near-black backdrop — matching
-// the footer's treatment — instead of gold-on-cream, which is what made
-// the brand mark hard to read.
+// Navbar sits directly on top of the hero image with no own background,
+// border, or shadow so the hero flows continuously behind it.
 export default function Navbar({ transparent = false }) {
   const { isAuthenticated, user, logout } = useAuth();
   const { totals } = useCart();
@@ -39,14 +36,12 @@ export default function Navbar({ transparent = false }) {
   }, [location.pathname, location.search, location.hash]);
 
   const linkClass =
-    "relative px-3 py-2 text-sm font-medium text-cream-100/85 hover:text-gold-300 transition-colors duration-200 after:content-[''] after:absolute after:left-3 after:right-3 after:-bottom-0.5 after:h-px after:bg-gold-300 after:scale-x-0 after:origin-left after:transition-transform after:duration-300 hover:after:scale-x-100";
+    "relative px-3 py-2 text-sm font-medium text-cream-100/90 hover:text-gold-300 transition-colors duration-200 [text-shadow:0_1px_3px_rgba(0,0,0,0.65)] after:content-[''] after:absolute after:left-3 after:right-3 after:-bottom-0.5 after:h-px after:bg-gold-300 after:scale-x-0 after:origin-left after:transition-transform after:duration-300 hover:after:scale-x-100";
 
   return (
     <header
       className={`top-0 z-50 ${
-        transparent
-          ? "absolute w-full bg-white/5 backdrop-blur-md border-b border-white/10"
-          : "sticky bg-ink-900/85 backdrop-blur-md border-b border-white/10"
+        transparent ? "absolute w-full bg-transparent" : "sticky bg-transparent"
       }`}
     >
       <div className="max-w-7xl mx-auto px-5 sm:px-8 h-[72px] flex items-center justify-between gap-3 sm:gap-4">
