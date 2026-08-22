@@ -64,7 +64,7 @@ export default function Navbar({ transparent = false }) {
 
           <button
             onClick={() => navigate("/restaurants")}
-            className="p-2 rounded-full text-white hover:bg-white/10 transition-colors"
+            className="p-2 rounded-full text-cream-100 hover:text-gold-300 transition-colors [text-shadow:0_1px_3px_rgba(0,0,0,0.65)]"
             aria-label="Search restaurants, dishes and cuisines"
           >
             <Search size={20} />
@@ -72,7 +72,7 @@ export default function Navbar({ transparent = false }) {
 
           <button
             onClick={() => navigate("/cart")}
-            className="relative p-2 rounded-full text-white hover:bg-white/10 transition-colors"
+            className="relative p-2 rounded-full text-cream-100 hover:text-gold-300 transition-colors [text-shadow:0_1px_3px_rgba(0,0,0,0.65)]"
             aria-label="Cart"
           >
             <ShoppingBag size={20} />
