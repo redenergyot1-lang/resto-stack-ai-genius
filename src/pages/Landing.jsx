@@ -15,6 +15,16 @@ export default function Landing() {
   const { city, hasCoverage } = useDeliveryLocation();
   const { restaurants, categories } = useData();
   const [locationOpen, setLocationOpen] = useState(false);
+  const { hash } = useLocation();
+
+  // Navbar "Cuisines" link points at /#cuisines — scroll to the section
+  // when the hash is present (including navigations from other pages).
+  useEffect(() => {
+    if (hash !== "#cuisines") return;
+    const el = document.getElementById("cuisines");
+    if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
+  }, [hash, categories]);
+
 
   // Restaurant listings update to the selected delivery city. When the
   // chosen city has no partners yet (most of INDIAN_CITIES — only the 10
