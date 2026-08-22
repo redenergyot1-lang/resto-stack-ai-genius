@@ -1,8 +1,15 @@
-import { Link, useNavigate } from "react-router-dom";
-import { ShoppingBag, User, LogOut, Search } from "lucide-react";
+import { Link, useNavigate, useLocation } from "react-router-dom";
+import { ShoppingBag, User, LogOut, Search, Menu, X } from "lucide-react";
 import { useState, useRef, useEffect } from "react";
 import { useAuth } from "../context/AuthContext.jsx";
 import { useCart } from "../context/CartContext.jsx";
+
+const NAV_LINKS = [
+  { label: "Cuisines", to: "/#cuisines" },
+  { label: "Offers", to: "/restaurants?offers=1" },
+  { label: "Support", to: "/contact" },
+];
+
 
 
 // Navbar is always a dark "ink" surface now (in `transparent` mode it sits
