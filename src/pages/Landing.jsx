@@ -95,7 +95,7 @@ export default function Landing() {
       </div>
 
       <main className="flex-1 max-w-7xl mx-auto px-5 sm:px-8 w-full">
-        <section className="py-16">
+        <section id="cuisines" className="py-16 scroll-mt-24">
           <h2 className="font-display text-3xl sm:text-4xl font-bold text-ink-900 mb-10">Culinary Journeys</h2>
           <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-6 gap-x-4 gap-y-10">
             {categories.map((c) => (
