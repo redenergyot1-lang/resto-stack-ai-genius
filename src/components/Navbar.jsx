@@ -137,14 +137,14 @@ export default function Navbar({ transparent = false }) {
       </div>
 
       {navOpen && (
-        <div className="md:hidden bg-ink-900/95 backdrop-blur-md border-t border-white/10 animate-fadeUp">
+        <div className="md:hidden bg-ink-900/80 backdrop-blur-[2px] animate-fadeUp">
           <nav className="max-w-7xl mx-auto px-5 sm:px-8 py-3 flex flex-col">
             {NAV_LINKS.map((l) => (
               <Link
                 key={l.label}
                 to={l.to}
                 onClick={() => setNavOpen(false)}
-                className="py-3 text-sm font-medium text-cream-100/90 hover:text-gold-300 transition-colors border-b border-white/5 last:border-0"
+                className="py-3 text-sm font-medium text-cream-100/90 hover:text-gold-300 transition-colors border-b border-white/5 last:border-0 [text-shadow:0_1px_3px_rgba(0,0,0,0.65)]"
               >
                 {l.label}
               </Link>
