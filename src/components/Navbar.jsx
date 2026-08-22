@@ -127,7 +127,7 @@ export default function Navbar({ transparent = false }) {
 
           <button
             onClick={() => setNavOpen((v) => !v)}
-            className="md:hidden p-2 rounded-full text-white hover:bg-white/10 transition-colors"
+            className="md:hidden p-2 rounded-full text-cream-100 hover:text-gold-300 transition-colors [text-shadow:0_1px_3px_rgba(0,0,0,0.65)]"
             aria-label="Menu"
             aria-expanded={navOpen}
           >
