@@ -21,7 +21,9 @@ export default function Navbar({ transparent = false }) {
   const { isAuthenticated, user, logout } = useAuth();
   const { totals } = useCart();
   const [menuOpen, setMenuOpen] = useState(false);
+  const [navOpen, setNavOpen] = useState(false);
   const navigate = useNavigate();
+  const location = useLocation();
   const ref = useRef(null);
 
   useEffect(() => {
@@ -32,23 +34,39 @@ export default function Navbar({ transparent = false }) {
     return () => document.removeEventListener("mousedown", onClick);
   }, []);
 
+  useEffect(() => {
+    setNavOpen(false);
+  }, [location.pathname, location.search, location.hash]);
+
+  const linkClass =
+    "relative px-3 py-2 text-sm font-medium text-cream-100/85 hover:text-gold-300 transition-colors duration-200 after:content-[''] after:absolute after:left-3 after:right-3 after:-bottom-0.5 after:h-px after:bg-gold-300 after:scale-x-0 after:origin-left after:transition-transform after:duration-300 hover:after:scale-x-100";
+
   return (
     <header
       className={`top-0 z-50 ${
         transparent
-          ? "absolute w-full bg-transparent"
-          : "sticky bg-ink-900 border-b border-white/10"
+          ? "absolute w-full bg-white/5 backdrop-blur-md border-b border-white/10"
+          : "sticky bg-ink-900/85 backdrop-blur-md border-b border-white/10"
       }`}
     >
       <div className="max-w-7xl mx-auto px-5 sm:px-8 h-[72px] flex items-center justify-between gap-3 sm:gap-4">
         <Link to="/" className="flex items-center gap-2 shrink-0">
           <img src="/logo-mark.png" alt="" className="w-10 h-10 rounded-full object-cover ring-1 ring-white/15 shrink-0" />
-          <span className="font-display text-xl sm:text-2xl font-bold tracking-tight text-gold-300">
+          <span className="font-display text-xl sm:text-2xl font-bold tracking-tight text-gold-300 drop-shadow-[0_1px_6px_rgba(0,0,0,0.6)]">
             RestoStack
           </span>
         </Link>
 
+        <nav className="hidden md:flex items-center gap-1 lg:gap-2">
+          {NAV_LINKS.map((l) => (
+            <Link key={l.label} to={l.to} className={linkClass}>
+              {l.label}
+            </Link>
+          ))}
+        </nav>
+
         <div className="flex items-center gap-2 sm:gap-4 shrink-0">
+
           <button
             onClick={() => navigate("/restaurants")}
             className="p-2 rounded-full text-white hover:bg-white/10 transition-colors"
