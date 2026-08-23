@@ -148,7 +148,11 @@ export default function RestaurantListing() {
         <div className="flex items-center justify-between mb-5 flex-wrap gap-3">
           <h1 className="font-display text-3xl font-bold text-ink-900">
             {filtered.length} restaurants{" "}
-            {filters.cuisine ? `for "${filters.cuisine}"` : showingFallback ? "" : `in ${city}`}
+            {deal && DEAL_LABELS[deal]
+              ? `with ${DEAL_LABELS[deal]}`
+              : filters.cuisine
+                ? `for "${filters.cuisine}"`
+                : showingFallback ? "" : `in ${city}`}
           </h1>
           <div className="flex items-center gap-2.5">
             <FiltersButton filters={filters} setFilters={setFilters} cuisines={cuisineList} sort={sort} setSort={setSort} />
