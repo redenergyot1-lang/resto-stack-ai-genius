@@ -5,12 +5,54 @@ import { useAuth } from "../context/AuthContext.jsx";
 import { useCart } from "../context/CartContext.jsx";
 
 const NAV_LINKS = [
-  { label: "Cuisines", to: "/#cuisines" },
-  { label: "Offers", to: "/restaurants?offers=1" },
-  { label: "Support", to: "/contact" },
+  {
+    label: "Cuisines",
+    to: "/#cuisines",
+    items: [
+      { label: "North Indian", to: "/restaurants?cuisine=North Indian" },
+      { label: "South Indian", to: "/restaurants?cuisine=South Indian" },
+      { label: "Chinese", to: "/restaurants?cuisine=Chinese" },
+      { label: "Italian", to: "/restaurants?cuisine=Italian" },
+      { label: "Mexican", to: "/restaurants?cuisine=Mexican" },
+      { label: "Fast Food", to: "/restaurants?cuisine=Fast Food" },
+      { label: "Biryani", to: "/restaurants?cuisine=Biryani" },
+      { label: "Desserts", to: "/restaurants?cuisine=Desserts" },
+      { label: "Healthy Food", to: "/restaurants?cuisine=Healthy" },
+      { label: "Beverages", to: "/restaurants?cuisine=Beverages" },
+    ],
+  },
+  {
+    label: "Offers",
+    to: "/restaurants?offers=1",
+    items: [
+      { label: "Today's Offers", to: "/restaurants?offers=1&sort=rating_desc" },
+      { label: "Best Deals", to: "/restaurants?offers=1&sort=cost_asc" },
+      { label: "Free Delivery", to: "/restaurants?offers=1" },
+      { label: "Discount Offers", to: "/restaurants?offers=1" },
+      { label: "Restaurant Offers", to: "/restaurants?offers=1" },
+    ],
+  },
+  {
+    label: "Support",
+    to: "/contact",
+    items: [
+      { label: "Help Center", to: "/contact" },
+      { label: "Order Issues", to: "/contact?topic=order" },
+      { label: "Refunds", to: "/contact?topic=refund" },
+      { label: "Contact Support", to: "/contact" },
+      { label: "My Support Tickets", to: "/dashboard?tab=tickets" },
+    ],
+  },
 ];
 
+const DROPDOWN_BASE =
+  "absolute top-full left-1/2 -translate-x-1/2 min-w-[220px] pt-2 opacity-0 invisible translate-y-1 transition-all duration-200 ease-out group-hover:opacity-100 group-hover:visible group-hover:translate-y-0 pointer-events-none group-hover:pointer-events-auto";
 
+const DROPDOWN_PANEL =
+  "bg-ink-900/85 backdrop-blur-md rounded-xl border border-white/10 shadow-[0_12px_40px_-8px_rgba(0,0,0,0.55)] overflow-hidden py-2";
+
+const DROPDOWN_ITEM =
+  "block px-4 py-2.5 text-sm text-cream-100/90 hover:text-gold-300 hover:bg-white/5 transition-colors duration-150 [text-shadow:0_1px_3px_rgba(0,0,0,0.65)]";
 
 // Navbar sits directly on top of the hero image with no own background,
 // border, or shadow so the hero flows continuously behind it.
@@ -19,6 +61,7 @@ export default function Navbar({ transparent = false }) {
   const { totals } = useCart();
   const [menuOpen, setMenuOpen] = useState(false);
   const [navOpen, setNavOpen] = useState(false);
+  const [mobileExpanded, setMobileExpanded] = useState({});
   const navigate = useNavigate();
   const location = useLocation();
   const ref = useRef(null);
@@ -33,10 +76,15 @@ export default function Navbar({ transparent = false }) {
 
   useEffect(() => {
     setNavOpen(false);
+    setMobileExpanded({});
   }, [location.pathname, location.search, location.hash]);
 
   const linkClass =
     "relative px-3 py-2 text-sm font-medium text-cream-100/90 hover:text-gold-300 transition-colors duration-200 [text-shadow:0_1px_3px_rgba(0,0,0,0.65)] after:content-[''] after:absolute after:left-3 after:right-3 after:-bottom-0.5 after:h-px after:bg-gold-300 after:scale-x-0 after:origin-left after:transition-transform after:duration-300 hover:after:scale-x-100";
+
+  function toggleMobileGroup(label) {
+    setMobileExpanded((prev) => ({ ...prev, [label]: !prev[label] }));
+  }
 
   return (
     <header
@@ -54,14 +102,24 @@ export default function Navbar({ transparent = false }) {
 
         <nav className="hidden md:flex items-center gap-1 lg:gap-2">
           {NAV_LINKS.map((l) => (
-            <Link key={l.label} to={l.to} className={linkClass}>
-              {l.label}
-            </Link>
+            <div key={l.label} className="group relative">
+              <Link to={l.to} className={linkClass}>
+                {l.label}
+              </Link>
+              <div className={DROPDOWN_BASE}>
+                <div className={DROPDOWN_PANEL}>
+                  {l.items.map((item) => (
+                    <Link key={item.label} to={item.to} className={DROPDOWN_ITEM}>
+                      {item.label}
+                    </Link>
+                  ))}
+                </div>
+              </div>
+            </div>
           ))}
         </nav>
 
         <div className="flex items-center gap-2 sm:gap-4 shrink-0">
-
           <button
             onClick={() => navigate("/restaurants")}
             className="p-2 rounded-full text-cream-100 hover:text-gold-300 transition-colors [text-shadow:0_1px_3px_rgba(0,0,0,0.65)]"
@@ -140,19 +198,45 @@ export default function Navbar({ transparent = false }) {
         <div className="md:hidden bg-ink-900/80 backdrop-blur-[2px] animate-fadeUp">
           <nav className="max-w-7xl mx-auto px-5 sm:px-8 py-3 flex flex-col">
             {NAV_LINKS.map((l) => (
-              <Link
-                key={l.label}
-                to={l.to}
-                onClick={() => setNavOpen(false)}
-                className="py-3 text-sm font-medium text-cream-100/90 hover:text-gold-300 transition-colors border-b border-white/5 last:border-0 [text-shadow:0_1px_3px_rgba(0,0,0,0.65)]"
-              >
-                {l.label}
-              </Link>
+              <div key={l.label} className="border-b border-white/5 last:border-0">
+                <div className="flex items-center justify-between">
+                  <Link
+                    to={l.to}
+                    onClick={() => setNavOpen(false)}
+                    className="flex-1 py-3 text-sm font-medium text-cream-100/90 hover:text-gold-300 transition-colors [text-shadow:0_1px_3px_rgba(0,0,0,0.65)]"
+                  >
+                    {l.label}
+                  </Link>
+                  {l.items.length > 0 && (
+                    <button
+                      onClick={() => toggleMobileGroup(l.label)}
+                      className="p-2 text-cream-100/70 hover:text-gold-300"
+                      aria-expanded={mobileExpanded[l.label]}
+                      aria-label={`Toggle ${l.label} submenu`}
+                    >
+                      {mobileExpanded[l.label] ? <X size={16} /> : <Menu size={16} />}
+                    </button>
+                  )}
+                </div>
+                {mobileExpanded[l.label] && (
+                  <div className="pb-2 pl-3 flex flex-col border-l border-white/10 ml-1">
+                    {l.items.map((item) => (
+                      <Link
+                        key={item.label}
+                        to={item.to}
+                        onClick={() => setNavOpen(false)}
+                        className="py-2 pl-3 text-sm text-cream-100/80 hover:text-gold-300 transition-colors [text-shadow:0_1px_3px_rgba(0,0,0,0.65)]"
+                      >
+                        {item.label}
+                      </Link>
+                    ))}
+                  </div>
+                )}
+              </div>
             ))}
           </nav>
         </div>
       )}
     </header>
-
   );
 }
