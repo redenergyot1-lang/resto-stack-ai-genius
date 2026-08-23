@@ -25,11 +25,11 @@ const NAV_LINKS = [
     label: "Offers",
     to: "/restaurants?offers=1",
     items: [
-      { label: "Today's Offers", to: "/restaurants?offers=1&sort=rating_desc" },
-      { label: "Best Deals", to: "/restaurants?offers=1&sort=cost_asc" },
-      { label: "Free Delivery", to: "/restaurants?offers=1" },
-      { label: "Discount Offers", to: "/restaurants?offers=1" },
-      { label: "Restaurant Offers", to: "/restaurants?offers=1" },
+      { label: "Under ₹150", to: "/restaurants?deal=under150" },
+      { label: "20%+ OFF", to: "/restaurants?deal=discount20" },
+      { label: "30%+ OFF", to: "/restaurants?deal=discount30" },
+      { label: "Free Delivery", to: "/restaurants?deal=freeDelivery" },
+      { label: "Best Deals", to: "/restaurants?deal=best" },
     ],
   },
   {

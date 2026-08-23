@@ -11,12 +11,45 @@ import { useDeliveryLocation } from "../context/LocationContext.jsx";
 import { useData } from "../context/DataContext.jsx";
 import { MapPin, SearchX } from "lucide-react";
 
+// Offer-driven quick views reachable from the navbar "Offers" dropdown.
+// Each one narrows the listing differently so no two links land on the
+// same set of restaurants.
+const DEAL_LABELS = {
+  under150: "meals under ₹150",
+  discount20: "20%+ OFF",
+  discount30: "30%+ OFF",
+  freeDelivery: "free delivery",
+  best: "best deals",
+};
+
+function offerPercent(r) {
+  const m = /(\d+)\s*%/.exec(r.offerText || "");
+  return m ? parseInt(m[1], 10) : 0;
+}
+function hasFreeDelivery(r) {
+  return /free delivery/i.test(r.offerText || "");
+}
+function cheapestDish(r) {
+  const prices = (r.menu || []).filter((d) => d.available !== false).map((d) => d.price);
+  return prices.length ? Math.min(...prices) : Infinity;
+}
+function dealScore(r) {
+  return (
+    r.rating * 2 +
+    offerPercent(r) / 10 +
+    (hasFreeDelivery(r) ? 1.5 : 0) +
+    Math.max(0, (800 - r.costForTwo) / 200) +
+    Math.max(0, (50 - r.deliveryTime) / 20)
+  );
+}
+
 export default function RestaurantListing() {
   const [params] = useSearchParams();
   const { city, hasCoverage } = useDeliveryLocation();
   const { restaurants, allCuisines, loading: dataLoading } = useData();
   const [loading, setLoading] = useState(true);
   const [sort, setSort] = useState(params.get("sort") || "relevance");
+  const deal = params.get("deal");
   const [filters, setFilters] = useState({
     ...DEFAULT_FILTERS,
     offers: !!params.get("offers"),
@@ -26,6 +59,17 @@ export default function RestaurantListing() {
   useEffect(() => {
     setLoading(dataLoading);
   }, [dataLoading]);
+
+  // Keep the filter state in sync when the navbar links change the query
+  // string while this page is already mounted.
+  useEffect(() => {
+    setFilters((f) => ({
+      ...f,
+      offers: !!params.get("offers"),
+      cuisine: params.get("cuisine") || null,
+    }));
+    setSort(params.get("sort") || "relevance");
+  }, [params]);
 
   // Every cuisine actually present across restaurants, not just the
   // curated "Culinary Journeys" categories shown on the landing page — a
@@ -53,6 +97,25 @@ export default function RestaurantListing() {
     if (filters.maxDeliveryTime) list = list.filter((r) => r.deliveryTime <= parseInt(filters.maxDeliveryTime, 10));
     if (filters.maxCost) list = list.filter((r) => r.costForTwo <= parseInt(filters.maxCost, 10));
 
+    // Offer-dropdown deal views
+    if (deal === "under150") {
+      list = list.filter((r) => cheapestDish(r) <= 150);
+      list.sort((a, b) => cheapestDish(a) - cheapestDish(b));
+    } else if (deal === "discount20") {
+      list = list.filter((r) => offerPercent(r) >= 20);
+      list.sort((a, b) => offerPercent(b) - offerPercent(a));
+    } else if (deal === "discount30") {
+      list = list.filter((r) => offerPercent(r) >= 30);
+      list.sort((a, b) => offerPercent(b) - offerPercent(a));
+    } else if (deal === "freeDelivery") {
+      list = list.filter(hasFreeDelivery);
+      list.sort((a, b) => b.rating - a.rating);
+    } else if (deal === "best") {
+      list = list.filter((r) => r.hasOffer && r.rating >= 4);
+      list.sort((a, b) => dealScore(b) - dealScore(a));
+      list = list.slice(0, 24);
+    }
+
     switch (sort) {
       case "rating_desc": list.sort((a, b) => b.rating - a.rating); break;
       case "rating_asc": list.sort((a, b) => a.rating - b.rating); break;
@@ -62,7 +125,8 @@ export default function RestaurantListing() {
       default: break;
     }
     return list;
-  }, [filters, sort, city, showingFallback, restaurants]);
+  }, [filters, sort, city, showingFallback, restaurants, deal]);
+
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -84,7 +148,11 @@ export default function RestaurantListing() {
         <div className="flex items-center justify-between mb-5 flex-wrap gap-3">
           <h1 className="font-display text-3xl font-bold text-ink-900">
             {filtered.length} restaurants{" "}
-            {filters.cuisine ? `for "${filters.cuisine}"` : showingFallback ? "" : `in ${city}`}
+            {deal && DEAL_LABELS[deal]
+              ? `with ${DEAL_LABELS[deal]}`
+              : filters.cuisine
+                ? `for "${filters.cuisine}"`
+                : showingFallback ? "" : `in ${city}`}
           </h1>
           <div className="flex items-center gap-2.5">
             <FiltersButton filters={filters} setFilters={setFilters} cuisines={cuisineList} sort={sort} setSort={setSort} />
