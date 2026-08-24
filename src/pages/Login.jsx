@@ -1,30 +1,66 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
-import { Mail, Lock, AlertCircle } from "lucide-react";
+import { Mail, Lock, AlertCircle, CheckCircle2 } from "lucide-react";
 import { useAuth } from "../context/AuthContext.jsx";
 
 export default function Login() {
-  const { login, googleSignIn } = useAuth();
+  const { login, googleSignIn, resendVerification } = useAuth();
   const navigate = useNavigate();
   const [params] = useSearchParams();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
+  const [needsVerification, setNeedsVerification] = useState(false);
+  const [notice, setNotice] = useState("");
+  const [cooldown, setCooldown] = useState(0);
+  const [resending, setResending] = useState(false);
   const [loading, setLoading] = useState(false);
 
   const next = params.get("next") || "/";
 
+  useEffect(() => {
+    if (cooldown <= 0) return;
+    const t = setTimeout(() => setCooldown((c) => c - 1), 1000);
+    return () => clearTimeout(t);
+  }, [cooldown]);
+
   async function handleSubmit(e) {
     e.preventDefault();
     setError("");
+    setNotice("");
+    setNeedsVerification(false);
     setLoading(true);
     try {
       await login(email, password);
       navigate(next);
     } catch (err) {
-      setError(err.message);
+      if (err.code === "email_not_confirmed") {
+        setNeedsVerification(true);
+        setError("Please verify your email. A verification link has been sent to your email address.");
+      } else if (err.code === "rate_limited") {
+        setError("Too many attempts. Please wait a moment and try again.");
+      } else if (err.code === "invalid_credentials" || err.code === "unknown") {
+        setError("Invalid email or password.");
+      } else {
+        setError(err.message || "Something went wrong. Please try again.");
+      }
     } finally {
       setLoading(false);
+    }
+  }
+
+  async function handleResend() {
+    if (cooldown > 0 || resending || !email) return;
+    setResending(true);
+    setNotice("");
+    try {
+      await resendVerification(email);
+      setNotice("Verification email sent. Please check your inbox and spam folder.");
+      setCooldown(45);
+    } catch (err) {
+      setError(err.message || "Could not send verification email. Please try again shortly.");
+    } finally {
+      setResending(false);
     }
   }
 
@@ -49,10 +85,29 @@ export default function Login() {
         <p className="text-sm text-ink-300 text-center mt-1.5 mb-7">Sign in to order from your favourite restaurants</p>
 
         {error && (
-          <div className="flex items-center gap-2 bg-red-50 text-red-600 text-sm px-3.5 py-2.5 rounded-xl mb-4">
-            <AlertCircle size={15} /> {error}
+          <div className="bg-red-50 text-red-600 text-sm px-3.5 py-2.5 rounded-xl mb-4">
+            <div className="flex items-start gap-2">
+              <AlertCircle size={15} className="mt-0.5 shrink-0" /> <span>{error}</span>
+            </div>
+            {needsVerification && (
+              <button
+                type="button"
+                onClick={handleResend}
+                disabled={cooldown > 0 || resending}
+                className="mt-2 ml-[23px] text-xs font-semibold text-gold-600 hover:text-gold-700 disabled:opacity-60 underline underline-offset-2"
+              >
+                {resending ? "Sending..." : cooldown > 0 ? `Resend verification email (${cooldown}s)` : "Resend verification email"}
+              </button>
+            )}
           </div>
         )}
+
+        {notice && (
+          <div className="flex items-start gap-2 bg-green-50 text-green-700 text-sm px-3.5 py-2.5 rounded-xl mb-4">
+            <CheckCircle2 size={15} className="mt-0.5 shrink-0" /> {notice}
+          </div>
+        )}
+
 
         <form onSubmit={handleSubmit} className="space-y-3.5">
           <div className="relative">
