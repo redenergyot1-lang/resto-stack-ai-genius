@@ -35,9 +35,33 @@ export function AuthProvider({ children }) {
 
   async function login(email, password) {
     const { data, error } = await supabase.auth.signInWithPassword({ email, password });
-    if (error) throw new Error(error.message);
+    if (error) {
+      const code = error.code || "";
+      const msg = (error.message || "").toLowerCase();
+      const err = new Error(error.message);
+      if (code === "email_not_confirmed" || msg.includes("email not confirmed") || msg.includes("not confirmed")) {
+        err.code = "email_not_confirmed";
+      } else if (error.status === 429 || code === "over_request_rate_limit" || msg.includes("rate limit")) {
+        err.code = "rate_limited";
+      } else if (code === "invalid_credentials" || msg.includes("invalid login credentials")) {
+        err.code = "invalid_credentials";
+      } else {
+        err.code = code || "unknown";
+      }
+      throw err;
+    }
     return toUser(data.session);
   }
+
+  async function resendVerification(email) {
+    const { error } = await supabase.auth.resend({
+      type: "signup",
+      email,
+      options: { emailRedirectTo: window.location.origin },
+    });
+    if (error) throw new Error(error.message);
+  }
+
 
   async function signup({ name, email, password }) {
     const { data, error } = await supabase.auth.signUp({
