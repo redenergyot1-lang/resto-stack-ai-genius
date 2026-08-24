@@ -104,7 +104,7 @@ export function AuthProvider({ children }) {
 
   return (
     <AuthContext.Provider
-      value={{ user, session, token: session?.access_token || null, loading, login, signup, googleSignIn, logout, updateProfile, isAuthenticated: !!user }}
+      value={{ user, session, token: session?.access_token || null, loading, login, signup, googleSignIn, logout, updateProfile, resendVerification, isAuthenticated: !!user }}
     >
       {children}
     </AuthContext.Provider>
