@@ -69,8 +69,26 @@ export function AuthProvider({ children }) {
       password,
       options: { emailRedirectTo: window.location.origin, data: { name } },
     });
-    if (error) throw new Error(error.message);
-    return toUser(data.session);
+    if (error) {
+      const msg = (error.message || "").toLowerCase();
+      const err = new Error(error.message);
+      if (error.code === "user_already_exists" || msg.includes("already registered")) {
+        err.code = "user_already_exists";
+      } else if (error.status === 429 || msg.includes("rate limit")) {
+        err.code = "rate_limited";
+      } else {
+        err.code = error.code || "unknown";
+      }
+      throw err;
+    }
+    // Supabase returns a user with an empty identities array when the email
+    // already exists (to avoid leaking accounts). Treat that as "already registered".
+    if (data?.user && Array.isArray(data.user.identities) && data.user.identities.length === 0) {
+      const err = new Error("An account with this email already exists.");
+      err.code = "user_already_exists";
+      throw err;
+    }
+    return { user: toUser(data.session), needsVerification: !data.session };
   }
 
   async function googleSignIn() {
