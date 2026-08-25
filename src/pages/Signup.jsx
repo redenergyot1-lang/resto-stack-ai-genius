@@ -84,6 +84,24 @@ export default function Signup() {
           </div>
         )}
 
+        {notice && (
+          <div className="bg-green-50 text-green-700 text-sm px-3.5 py-2.5 rounded-xl mb-4">
+            <div className="flex items-start gap-2">
+              <CheckCircle2 size={15} className="mt-0.5 shrink-0" /> <span>{notice}</span>
+            </div>
+            {sent && (
+              <button
+                type="button"
+                onClick={handleResend}
+                disabled={cooldown > 0}
+                className="mt-2 ml-[23px] text-xs font-semibold text-gold-600 hover:text-gold-700 disabled:opacity-60 underline underline-offset-2"
+              >
+                {cooldown > 0 ? `Resend verification link (${cooldown}s)` : "Resend verification link"}
+              </button>
+            )}
+          </div>
+        )}
+
         <form onSubmit={handleSubmit} className="space-y-3.5">
           <div className="relative">
             <User size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-ink-300" />
