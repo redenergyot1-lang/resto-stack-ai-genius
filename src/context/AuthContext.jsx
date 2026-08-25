@@ -91,12 +91,32 @@ export function AuthProvider({ children }) {
     return { user: toUser(data.session), needsVerification: !data.session };
   }
 
-  async function googleSignIn() {
+  async function googleSignIn(next = "/") {
+    // Remember where the user wanted to go; /auth/callback reads this once the
+    // session is hydrated. Only same-origin relative paths are kept.
+    const safeNext = typeof next === "string" && next.startsWith("/") && !next.startsWith("//") ? next : "/";
+    try {
+      sessionStorage.setItem("auth:next", safeNext);
+    } catch {
+      /* ignore private-mode storage errors */
+    }
     const { error } = await supabase.auth.signInWithOAuth({
       provider: "google",
-      options: { redirectTo: window.location.origin },
+      options: {
+        redirectTo: `${window.location.origin}/auth/callback`,
+        queryParams: { prompt: "select_account" },
+      },
     });
-    if (error) throw new Error(error.message);
+    if (error) {
+      const msg = (error.message || "").toLowerCase();
+      const err = new Error(error.message);
+      if (msg.includes("provider is not enabled") || msg.includes("unsupported provider")) {
+        err.code = "provider_disabled";
+      } else {
+        err.code = error.code || "unknown";
+      }
+      throw err;
+    }
   }
 
   async function logout() {
