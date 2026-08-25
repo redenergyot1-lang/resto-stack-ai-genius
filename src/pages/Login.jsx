@@ -65,12 +65,19 @@ export default function Login() {
   }
 
   async function handleGoogle() {
+    setError("");
+    setNotice("");
     setLoading(true);
     try {
-      await googleSignIn();
-      navigate(next);
-    } finally {
+      // Redirects to Google; the browser leaves this page on success.
+      await googleSignIn(next);
+    } catch (err) {
       setLoading(false);
+      if (err.code === "provider_disabled") {
+        setError("Google sign-in isn't enabled yet. Enable the Google provider in your Supabase project settings.");
+      } else {
+        setError(err.message || "Could not start Google sign-in. Please try again.");
+      }
     }
   }
 
