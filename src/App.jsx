@@ -6,6 +6,7 @@ import SearchResults from "./pages/SearchResults.jsx";
 import Cart from "./pages/Cart.jsx";
 import Login from "./pages/Login.jsx";
 import Signup from "./pages/Signup.jsx";
+import AuthCallback from "./pages/AuthCallback.jsx";
 import Dashboard from "./pages/Dashboard.jsx";
 import { InfoPage, ContactPage } from "./pages/InfoPage.jsx";
 import ProtectedRoute from "./components/ProtectedRoute.jsx";
@@ -35,6 +36,7 @@ export default function App() {
       <Route path="/cart" element={<Cart />} />
       <Route path="/login" element={<Login />} />
       <Route path="/signup" element={<Signup />} />
+      <Route path="/auth/callback" element={<AuthCallback />} />
       <Route path="/info/:slug" element={<InfoPage />} />
       <Route path="/contact" element={<ContactPage />} />
       <Route
