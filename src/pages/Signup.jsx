@@ -1,26 +1,60 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Mail, Lock, User, AlertCircle } from "lucide-react";
+import { Mail, Lock, User, AlertCircle, CheckCircle2 } from "lucide-react";
 import { useAuth } from "../context/AuthContext.jsx";
 
 export default function Signup() {
-  const { signup, googleSignIn } = useAuth();
+  const { signup, googleSignIn, resendVerification } = useAuth();
   const navigate = useNavigate();
   const [form, setForm] = useState({ name: "", email: "", password: "" });
   const [error, setError] = useState("");
+  const [sent, setSent] = useState(false);
+  const [notice, setNotice] = useState("");
+  const [cooldown, setCooldown] = useState(0);
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (cooldown <= 0) return;
+    const t = setTimeout(() => setCooldown((c) => c - 1), 1000);
+    return () => clearTimeout(t);
+  }, [cooldown]);
 
   async function handleSubmit(e) {
     e.preventDefault();
     setError("");
+    setNotice("");
     setLoading(true);
     try {
-      await signup(form);
-      navigate("/");
+      const res = await signup(form);
+      if (res?.needsVerification) {
+        setSent(true);
+        setCooldown(45);
+        setNotice(`We've sent a verification link to ${form.email}. Please confirm your email, then sign in.`);
+      } else {
+        navigate("/");
+      }
     } catch (err) {
-      setError(err.message);
+      if (err.code === "user_already_exists") {
+        setError("An account with this email already exists. Try signing in instead.");
+      } else if (err.code === "rate_limited") {
+        setError("Too many attempts. Please wait a moment and try again.");
+      } else {
+        setError(err.message || "Something went wrong. Please try again.");
+      }
     } finally {
       setLoading(false);
+    }
+  }
+
+  async function handleResend() {
+    if (cooldown > 0 || !form.email) return;
+    setError("");
+    try {
+      await resendVerification(form.email);
+      setNotice(`Verification link re-sent to ${form.email}. Check your inbox and spam folder.`);
+      setCooldown(45);
+    } catch (err) {
+      setError(err.message || "Could not resend the verification email.");
     }
   }
 
