@@ -284,21 +284,40 @@ function ReviewsTab() {
 }
 
 function SupportTab() {
-  const [tickets, setTickets] = useState(() => loadJSON("restostack_tickets", []));
+  const { user } = useAuth();
+  const [tickets, setTickets] = useState([]);
   const [form, setForm] = useState({ subject: "", category: "Order Issue", description: "" });
   const [submitted, setSubmitted] = useState(false);
 
-  useEffect(() => localStorage.setItem("restostack_tickets", JSON.stringify(tickets)), [tickets]);
+  async function loadTickets() {
+    if (!user) return;
+    const { data } = await supabase
+      .from("support_tickets")
+      .select("*")
+      .eq("user_id", user.id)
+      .order("created_at", { ascending: false });
+    setTickets(data || []);
+  }
 
-  function submit(e) {
+  useEffect(() => { loadTickets(); }, [user]);
+
+  async function submit(e) {
     e.preventDefault();
-    if (!form.subject.trim() || !form.description.trim()) return;
-    const ticket = { id: `TKT${Math.floor(Math.random() * 90000 + 10000)}`, ...form, status: "Open", date: new Date().toISOString() };
-    setTickets((t) => [ticket, ...t]);
+    if (!form.subject.trim() || !form.description.trim() || !user) return;
+    const { error } = await supabase.from("support_tickets").insert({
+      user_id: user.id,
+      subject: form.subject.trim(),
+      category: form.category,
+      description: form.description.trim(),
+      status: "Open",
+    });
+    if (error) return;
     setForm({ subject: "", category: "Order Issue", description: "" });
     setSubmitted(true);
+    loadTickets();
     setTimeout(() => setSubmitted(false), 2500);
   }
+
 
   return (
     <div className="space-y-6">
@@ -350,7 +369,7 @@ function SupportTab() {
               <div key={t.id} className="flex items-center justify-between border border-ink-900/8 rounded-xl p-3.5">
                 <div>
                   <p className="font-medium text-ink-900 text-sm">{t.subject}</p>
-                  <p className="text-xs text-ink-300">{t.id} · {t.category}</p>
+                  <p className="text-xs text-ink-300">#{String(t.id).slice(0, 8)} · {t.category} · {new Date(t.created_at).toLocaleDateString()}</p>
                 </div>
                 <span className="text-xs font-semibold text-amber-600 bg-amber-50 px-2.5 py-1 rounded-full">{t.status}</span>
               </div>

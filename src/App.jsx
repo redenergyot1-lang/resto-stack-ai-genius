@@ -9,6 +9,10 @@ import Signup from "./pages/Signup.jsx";
 import AuthCallback from "./pages/AuthCallback.jsx";
 import Dashboard from "./pages/Dashboard.jsx";
 import { InfoPage, ContactPage } from "./pages/InfoPage.jsx";
+import HelpCenter from "./pages/HelpCenter.jsx";
+import RaiseTicket from "./pages/RaiseTicket.jsx";
+import MyTickets from "./pages/MyTickets.jsx";
+
 import ProtectedRoute from "./components/ProtectedRoute.jsx";
 import { EmptyState } from "./components/Misc.jsx";
 import Navbar from "./components/Navbar.jsx";
@@ -39,6 +43,24 @@ export default function App() {
       <Route path="/auth/callback" element={<AuthCallback />} />
       <Route path="/info/:slug" element={<InfoPage />} />
       <Route path="/contact" element={<ContactPage />} />
+      <Route path="/help" element={<HelpCenter />} />
+      <Route
+        path="/support/new"
+        element={
+          <ProtectedRoute>
+            <RaiseTicket />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/support/tickets"
+        element={
+          <ProtectedRoute>
+            <MyTickets />
+          </ProtectedRoute>
+        }
+      />
+
       <Route
         path="/dashboard"
         element={
