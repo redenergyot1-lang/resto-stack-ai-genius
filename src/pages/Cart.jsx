@@ -141,7 +141,9 @@ export default function Cart() {
               >
                 {placing ? "Placing order..." : "Proceed to pay"}
               </button>
+              {error && <p className="text-xs text-red-600 text-center mt-3">{error}</p>}
               <p className="text-[11px] text-ink-300 text-center mt-3">Secure payments powered by Razorpay</p>
+
             </div>
           </div>
         )}
