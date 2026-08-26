@@ -6,28 +6,65 @@ import VegBadge from "../components/VegBadge.jsx";
 import { CartEmptyState } from "../components/Misc.jsx";
 import { useCart } from "../context/CartContext.jsx";
 import { useAuth } from "../context/AuthContext.jsx";
+import { supabase } from "../integrations/supabase/client";
 import { useState } from "react";
 
 export default function Cart() {
-  const { items, setQty, removeItem, totals, clearCart } = useCart();
-  const { isAuthenticated } = useAuth();
+  const { items, setQty, removeItem, totals, clearCart, restaurantId } = useCart();
+  const { isAuthenticated, user } = useAuth();
   const navigate = useNavigate();
   const [placing, setPlacing] = useState(false);
   const [placed, setPlaced] = useState(false);
+  const [error, setError] = useState("");
 
-  function handleCheckout() {
+  async function handleCheckout() {
     if (!isAuthenticated) {
       navigate("/login?next=/cart");
       return;
     }
+    if (!items.length) return;
     setPlacing(true);
-    // TODO: replace with Razorpay checkout -> POST /api/orders -> Razorpay order -> verify -> confirm
-    setTimeout(() => {
-      setPlacing(false);
-      setPlaced(true);
+    setError("");
+    try {
+      const restId = restaurantId || items[0]?.restaurantId;
+      const { data: order, error: orderErr } = await supabase
+        .from("orders")
+        .insert({
+          user_id: user.id,
+          restaurant_id: restId,
+          restaurant_name: items[0]?.restaurantName || "Restaurant",
+          subtotal: totals.subtotal,
+          delivery_fee: totals.deliveryFee,
+          platform_fee: totals.platformFee,
+          tax: totals.tax,
+          total: totals.total,
+          status: "placed",
+          payment_method: "online",
+        })
+        .select()
+        .single();
+      if (orderErr) throw orderErr;
+
+      const { error: itemsErr } = await supabase.from("order_items").insert(
+        items.map((i) => ({
+          order_id: order.id,
+          dish_id: i.id,
+          dish_name: i.name,
+          price: i.price,
+          qty: i.qty,
+        }))
+      );
+      if (itemsErr) throw itemsErr;
+
       clearCart();
-    }, 1200);
+      setPlaced(true);
+    } catch (e) {
+      setError(e.message || "Could not place your order. Please try again.");
+    } finally {
+      setPlacing(false);
+    }
   }
+
 
   if (placed) {
     return (
