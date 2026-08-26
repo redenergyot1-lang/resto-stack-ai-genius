@@ -43,6 +43,24 @@ export default function App() {
       <Route path="/auth/callback" element={<AuthCallback />} />
       <Route path="/info/:slug" element={<InfoPage />} />
       <Route path="/contact" element={<ContactPage />} />
+      <Route path="/help" element={<HelpCenter />} />
+      <Route
+        path="/support/new"
+        element={
+          <ProtectedRoute>
+            <RaiseTicket />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/support/tickets"
+        element={
+          <ProtectedRoute>
+            <MyTickets />
+          </ProtectedRoute>
+        }
+      />
+
       <Route
         path="/dashboard"
         element={
