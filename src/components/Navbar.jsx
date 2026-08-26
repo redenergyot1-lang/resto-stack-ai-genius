@@ -34,15 +34,14 @@ const NAV_LINKS = [
   },
   {
     label: "Support",
-    to: "/contact",
+    to: "/help",
     items: [
-      { label: "Help Center", to: "/contact" },
-      { label: "Order Issues", to: "/contact?topic=order" },
-      { label: "Refunds", to: "/contact?topic=refund" },
-      { label: "Contact Support", to: "/contact" },
-      { label: "My Support Tickets", to: "/dashboard?tab=tickets" },
+      { label: "Help Center", to: "/help" },
+      { label: "Raise a Ticket", to: "/support/new" },
+      { label: "My Tickets", to: "/support/tickets" },
     ],
   },
+
 ];
 
 const DROPDOWN_BASE =
