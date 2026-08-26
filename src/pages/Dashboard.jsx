@@ -369,7 +369,7 @@ function SupportTab() {
               <div key={t.id} className="flex items-center justify-between border border-ink-900/8 rounded-xl p-3.5">
                 <div>
                   <p className="font-medium text-ink-900 text-sm">{t.subject}</p>
-                  <p className="text-xs text-ink-300">{t.id} · {t.category}</p>
+                  <p className="text-xs text-ink-300">#{String(t.id).slice(0, 8)} · {t.category} · {new Date(t.created_at).toLocaleDateString()}</p>
                 </div>
                 <span className="text-xs font-semibold text-amber-600 bg-amber-50 px-2.5 py-1 rounded-full">{t.status}</span>
               </div>
