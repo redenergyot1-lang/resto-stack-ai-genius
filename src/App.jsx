@@ -9,6 +9,10 @@ import Signup from "./pages/Signup.jsx";
 import AuthCallback from "./pages/AuthCallback.jsx";
 import Dashboard from "./pages/Dashboard.jsx";
 import { InfoPage, ContactPage } from "./pages/InfoPage.jsx";
+import HelpCenter from "./pages/HelpCenter.jsx";
+import RaiseTicket from "./pages/RaiseTicket.jsx";
+import MyTickets from "./pages/MyTickets.jsx";
+
 import ProtectedRoute from "./components/ProtectedRoute.jsx";
 import { EmptyState } from "./components/Misc.jsx";
 import Navbar from "./components/Navbar.jsx";
