@@ -117,19 +117,29 @@ Deno.serve(async (req) => {
       ...messages,
     ];
 
-    const res = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+    // Prefer the user's own OpenAI key (server-side only); fall back to the Lovable AI Gateway.
+    const OPENAI_API_KEY = Deno.env.get("OPENAI_API_KEY");
+    const useOpenAI = !!OPENAI_API_KEY;
+    const endpoint = useOpenAI
+      ? "https://api.openai.com/v1/chat/completions"
+      : "https://ai.gateway.lovable.dev/v1/chat/completions";
+    const model = useOpenAI ? "gpt-4o-mini" : "openai/gpt-5.4-mini";
+
+    const res = await fetch(endpoint, {
       method: "POST",
       headers: {
-        Authorization: `Bearer ${LOVABLE_API_KEY}`,
+        Authorization: `Bearer ${useOpenAI ? OPENAI_API_KEY : LOVABLE_API_KEY}`,
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "openai/gpt-5.4-mini",
+        model,
         messages: fullMessages,
         tools,
         tool_choice: "auto",
+        ...(useOpenAI ? { temperature: 0.3 } : {}),
       }),
     });
+
 
     if (!res.ok) {
       const text = await res.text();
