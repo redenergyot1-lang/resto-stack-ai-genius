@@ -120,26 +120,35 @@ Deno.serve(async (req) => {
 
     // Prefer the user's own OpenAI key (server-side only); fall back to the Lovable AI Gateway.
     const OPENAI_API_KEY = Deno.env.get("OPENAI_API_KEY");
-    const useOpenAI = !!OPENAI_API_KEY;
-    const endpoint = useOpenAI
-      ? "https://api.openai.com/v1/chat/completions"
-      : "https://ai.gateway.lovable.dev/v1/chat/completions";
-    const model = useOpenAI ? "gpt-4o-mini" : "openai/gpt-5.4-mini";
 
-    const res = await fetch(endpoint, {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${useOpenAI ? OPENAI_API_KEY : LOVABLE_API_KEY}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        model,
-        messages: fullMessages,
-        tools,
-        tool_choice: "auto",
-        ...(useOpenAI ? { temperature: 0.3 } : {}),
-      }),
-    });
+    const callModel = (viaOpenAI: boolean) =>
+      fetch(
+        viaOpenAI
+          ? "https://api.openai.com/v1/chat/completions"
+          : "https://ai.gateway.lovable.dev/v1/chat/completions",
+        {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${viaOpenAI ? OPENAI_API_KEY : LOVABLE_API_KEY}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            model: viaOpenAI ? "gpt-4o-mini" : "openai/gpt-5.4-mini",
+            messages: fullMessages,
+            tools,
+            tool_choice: "auto",
+            ...(viaOpenAI ? { temperature: 0.3 } : {}),
+          }),
+        },
+      );
+
+    let res = await callModel(!!OPENAI_API_KEY);
+    // If the user's OpenAI key is out of quota / unauthorized, fall back to the gateway.
+    if (OPENAI_API_KEY && !res.ok && [401, 402, 403, 429].includes(res.status) && LOVABLE_API_KEY) {
+      console.error("OpenAI call failed, falling back to Lovable AI Gateway:", res.status);
+      res = await callModel(false);
+    }
+
 
 
     if (!res.ok) {
