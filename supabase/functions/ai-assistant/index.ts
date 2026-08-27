@@ -118,7 +118,8 @@ Deno.serve(async (req) => {
       ...messages,
     ];
 
-    // Prefer the user's own OpenAI key (server-side only); fall back to the Lovable AI Gateway.
+    // Primary provider: Lovable AI Gateway (as before the OpenAI integration).
+    // OPENAI_API_KEY is only used as a fallback if the gateway is unavailable.
     const OPENAI_API_KEY = Deno.env.get("OPENAI_API_KEY");
 
     const callModel = (viaOpenAI: boolean) =>
@@ -142,12 +143,13 @@ Deno.serve(async (req) => {
         },
       );
 
-    let res = await callModel(!!OPENAI_API_KEY);
-    // If the user's OpenAI key is out of quota / unauthorized, fall back to the gateway.
-    if (OPENAI_API_KEY && !res.ok && [401, 402, 403, 429].includes(res.status) && LOVABLE_API_KEY) {
-      console.error("OpenAI call failed, falling back to Lovable AI Gateway:", res.status);
-      res = await callModel(false);
+    let res = await callModel(!LOVABLE_API_KEY);
+    // If the gateway is rate limited / out of credits, fall back to a direct OpenAI key when present.
+    if (LOVABLE_API_KEY && !res.ok && [401, 402, 403, 429].includes(res.status) && OPENAI_API_KEY) {
+      console.error("Gateway call failed, falling back to direct OpenAI:", res.status);
+      res = await callModel(true);
     }
+
 
 
 
