@@ -165,14 +165,21 @@ export default function AiAssistant() {
             {messages.map((m, i) => (
               <div
                 key={i}
-                className={`max-w-[85%] px-3.5 py-2.5 rounded-2xl text-sm whitespace-pre-wrap leading-relaxed ${
+                className={`max-w-[85%] px-3.5 py-2.5 rounded-2xl text-sm leading-relaxed ${
                   m.role === "user"
-                    ? "ml-auto bg-gold-500 text-cream-50 rounded-br-md"
+                    ? "ml-auto bg-gold-500 text-cream-50 rounded-br-md whitespace-pre-wrap"
                     : "bg-cream-50 text-ink-700 border border-cream-200 rounded-bl-md"
                 }`}
               >
-                {m.content}
+                {m.role === "user" ? (
+                  m.content
+                ) : (
+                  <div className="space-y-1.5 [&_ul]:list-disc [&_ul]:pl-4 [&_ul]:space-y-1 [&_ol]:list-decimal [&_ol]:pl-4 [&_strong]:font-semibold [&_strong]:text-ink-800 [&_a]:text-gold-600 [&_a]:underline">
+                    <ReactMarkdown>{m.content}</ReactMarkdown>
+                  </div>
+                )}
               </div>
+
             ))}
             {busy && (
               <div className="flex items-center gap-2 text-ink-500 text-sm">
