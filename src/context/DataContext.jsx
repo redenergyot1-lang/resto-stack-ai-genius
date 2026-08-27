@@ -1,6 +1,5 @@
 import { createContext, useContext, useEffect, useMemo, useState } from "react";
 import { supabase } from "../integrations/supabase/client";
-import { categories } from "../data/restaurants.js";
 
 const DataContext = createContext(null);
 
@@ -49,19 +48,21 @@ function mapRestaurant(r) {
 
 export function DataProvider({ children }) {
   const [restaurants, setRestaurants] = useState([]);
+  const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
   useEffect(() => {
     let cancelled = false;
     (async () => {
-      const [{ data: rRows, error: rErr }, { data: mRows, error: mErr }] = await Promise.all([
+      const [{ data: rRows, error: rErr }, { data: mRows, error: mErr }, { data: cRows, error: cErr }] = await Promise.all([
         supabase.from("restaurants").select("*"),
         supabase.from("menu_items").select("*"),
+        supabase.from("categories").select("*")
       ]);
       if (cancelled) return;
-      if (rErr || mErr) {
-        setError(rErr || mErr);
+      if (rErr || mErr || cErr) {
+        setError(rErr || mErr || cErr);
         setLoading(false);
         return;
       }
@@ -72,6 +73,7 @@ export function DataProvider({ children }) {
         if (r) r.menu.push(mapDish(m, r));
       });
       setRestaurants(mapped);
+      setCategories(cRows || []);
       setLoading(false);
     })();
     return () => { cancelled = true; };
@@ -81,7 +83,7 @@ export function DataProvider({ children }) {
     const map = {};
     categories.forEach((c) => { map[c.name] = c.image; });
     return map;
-  }, []);
+  }, [categories]);
 
   const allMenuItems = useMemo(
     () => restaurants.flatMap((r) => r.menu),

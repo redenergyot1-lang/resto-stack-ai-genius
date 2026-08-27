@@ -1,18 +1,12 @@
 export function buildAiContext(allRestaurants, city) {
-  const restaurants = (allRestaurants || []).filter((r) => !city || r.city === city);
+  // Only take top 10 restaurants and remove menus to drastically reduce tokens
+  const restaurants = (allRestaurants || []).filter((r) => !city || r.city === city).slice(0, 10);
   const compact = restaurants.map((r) => ({
-    id: r.id, name: r.name, slug: r.slug, city: r.city,
-    cuisines: r.cuisines, rating: r.rating, reviews: r.reviewCount,
-    deliveryMin: r.deliveryTime, costForTwo: r.costForTwo,
-    isVeg: r.isVeg, openNow: r.openNow, offer: r.offerText || null,
-    popular: r.popularDishes,
-    menu: (r.menu || []).map((d) => ({
-      id: d.id, name: d.name, category: d.category, price: d.price,
-      rating: d.rating, reviews: d.reviewCount, isVeg: d.isVeg,
-      bestseller: d.isBestseller, available: d.available,
-    })),
+    id: r.id, name: r.name, slug: r.slug,
+    cuisines: r.cuisines, rating: r.rating,
+    costForTwo: r.costForTwo
   }));
-  return JSON.stringify({ city: city || "All", restaurants: compact });
+  return JSON.stringify({ city: city || "All", top10Restaurants: compact, note: "Menus are omitted to save tokens. Use navigate tool to open restaurants." });
 }
 
 export function findDish(allRestaurants, query) {

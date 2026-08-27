@@ -248,7 +248,6 @@ const CATEGORIES = [
 const out = `// AUTO-GENERATED MOCK DATA — replace with real API calls once the
 // Express + MySQL backend is wired up. Regenerate via:
 //   node scripts/generate-data.cjs
-export const categories = ${JSON.stringify(CATEGORIES, null, 2)};
 
 export const restaurants = ${JSON.stringify(restaurants, null, 2)};
 

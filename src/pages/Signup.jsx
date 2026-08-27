@@ -35,7 +35,7 @@ export default function Signup() {
       }
     } catch (err) {
       if (err.code === "user_already_exists") {
-        setError("An account with this email already exists. Try signing in instead.");
+        setError(<span>This account already exists. Do you want to <Link to="/login" className="underline font-semibold">login</Link> instead of directly logging into the main website?</span>);
       } else if (err.code === "rate_limited") {
         setError("Too many attempts. Please wait a moment and try again.");
       } else {

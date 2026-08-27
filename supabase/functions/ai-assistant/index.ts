@@ -9,11 +9,12 @@ const corsHeaders = {
   "Access-Control-Allow-Methods": "POST, OPTIONS",
 };
 
-const SYSTEM = `You are the RestoStack Customer Assistant — a warm, sharp, genuinely helpful food-ordering concierge for the RestoStack platform.
+const SYSTEM = `You are the RestoStack Customer Assistant — a warm, sharp, genuinely helpful tour guide for restaurant souvenirs and food-ordering concierge.
 
 ## Scope
-- Help with RestoStack only: restaurants, cuisines, menus, dishes, prices, offers, cart, checkout, delivery, payments, refunds, order tracking, account and support.
-- If asked something unrelated, decline in one friendly line and steer back: "I only help with RestoStack — want a restaurant or dish recommendation?"
+- Help with restaurant souvenirs, RestoStack restaurants, cuisines, menus, dishes, prices, offers, cart, checkout, delivery, payments, refunds, order tracking, account and support.
+- Focus on acting as a helpful tour guide for restaurant souvenirs!
+- If asked something unrelated, decline in one friendly line and steer back: "I only help with RestoStack and restaurant souvenirs — want a recommendation?"
 
 ## Grounding — this is the most important rule
 - RESTAURANT_CONTEXT (JSON) is the single source of truth. Every restaurant name, dish name, price, rating, cuisine, delivery time and offer you state MUST come verbatim from it.
@@ -32,7 +33,8 @@ const SYSTEM = `You are the RestoStack Customer Assistant — a warm, sharp, gen
 
 ## Tools and references
 - Any request to change the cart or move around the site is an ACTION: call the matching tool immediately instead of describing what the user should click.
-- Use dishId values exactly as they appear in RESTAURANT_CONTEXT.
+- Since you don't have the full menus in RESTAURANT_CONTEXT, use the search_dishes tool to find specific food items when asked for recommendations.
+- When adding to cart, use the exact dish name returned by search_dishes or the user.
 - Track the ordered list of items you just showed. Resolve references against that list: "the first / second / last one", "the cheapest / most expensive one", "the highest rated one", "that one", "the biryani". Pick the right item and call add_to_cart — never ask the user to repeat themselves when the reference is unambiguous.
 - If a reference truly is ambiguous (two equally-matching items), ask one short clarifying question naming both options.
 - Quantities: "two of those" → quantity 2. "one more" → update_quantity with delta +1. "remove it" → remove_from_cart.
@@ -58,9 +60,10 @@ Deno.serve(async (req) => {
 
   try {
     const { messages, context } = (await req.json()) as ChatBody;
-    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
-    if (!LOVABLE_API_KEY && !Deno.env.get("OPENAI_API_KEY")) {
-      return new Response(JSON.stringify({ error: "No AI key configured (OPENAI_API_KEY / LOVABLE_API_KEY)" }), {
+    const GROQ_KEY = Deno.env.get("GROQ_KEY") || Deno.env.get("AI_KEY");
+    const GROQ_KEY2 = Deno.env.get("GROQ_KEY2");
+    if (!GROQ_KEY && !GROQ_KEY2) {
+      return new Response(JSON.stringify({ error: "No AI key configured" }), {
         status: 500,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
@@ -72,14 +75,28 @@ Deno.serve(async (req) => {
         type: "function",
         function: {
           name: "add_to_cart",
-          description: "Add a specific dish to the user's cart. Use dishId from RESTAURANT_CONTEXT.",
+          description: "Add a specific dish to the user's cart by name.",
           parameters: {
             type: "object",
             properties: {
-              dishId: { type: "string", description: "Dish id like D42" },
+              query: { type: "string", description: "Dish name e.g. 'Margherita Pizza'" },
               quantity: { type: "number", description: "Quantity to add", default: 1 },
             },
-            required: ["dishId"],
+            required: ["query", "quantity"],
+          },
+        },
+      },
+      {
+        type: "function",
+        function: {
+          name: "search_dishes",
+          description: "Search the full restaurant catalog for dishes matching a query (e.g. 'pizza', 'cheap veg'). Call this when the user asks for food recommendations.",
+          parameters: {
+            type: "object",
+            properties: {
+              query: { type: "string", description: "Search term for dish or cuisine." },
+            },
+            required: ["query"],
           },
         },
       },
@@ -138,36 +155,30 @@ Deno.serve(async (req) => {
       ...messages,
     ];
 
-    // Primary provider: Lovable AI Gateway (as before the OpenAI integration).
-    // OPENAI_API_KEY is only used as a fallback if the gateway is unavailable.
-    const OPENAI_API_KEY = Deno.env.get("OPENAI_API_KEY");
-
-    const callModel = (viaOpenAI: boolean) =>
+    const callModel = (key: string) =>
       fetch(
-        viaOpenAI
-          ? "https://api.openai.com/v1/chat/completions"
-          : "https://ai.gateway.lovable.dev/v1/chat/completions",
+        "https://api.groq.com/openai/v1/chat/completions",
         {
           method: "POST",
           headers: {
-            Authorization: `Bearer ${viaOpenAI ? OPENAI_API_KEY : LOVABLE_API_KEY}`,
+            Authorization: `Bearer ${key.trim()}`,
             "Content-Type": "application/json",
           },
           body: JSON.stringify({
-            model: viaOpenAI ? "gpt-4o-mini" : "openai/gpt-5.4-mini",
+            model: "openai/gpt-oss-20b",
             messages: fullMessages,
             tools,
             tool_choice: "auto",
-            ...(viaOpenAI ? { temperature: 0.3 } : {}),
+            temperature: 0.3,
           }),
         },
       );
 
-    let res = await callModel(!LOVABLE_API_KEY);
-    // If the gateway is rate limited / out of credits, fall back to a direct OpenAI key when present.
-    if (LOVABLE_API_KEY && !res.ok && [401, 402, 403, 429].includes(res.status) && OPENAI_API_KEY) {
-      console.error("Gateway call failed, falling back to direct OpenAI:", res.status);
-      res = await callModel(true);
+    let res = await callModel(GROQ_KEY || GROQ_KEY2 || "");
+    
+    if (res.status === 429 && GROQ_KEY2) {
+      console.log("Rate limit hit on primary key, falling back to GROQ_KEY2");
+      res = await callModel(GROQ_KEY2);
     }
 
 

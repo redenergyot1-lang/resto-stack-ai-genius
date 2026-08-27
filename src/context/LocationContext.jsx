@@ -1,29 +1,32 @@
 import { createContext, useContext, useEffect, useState } from "react";
-import { INDIAN_CITIES, DEFAULT_CITY } from "../data/cities.js";
+import { supabase } from "../integrations/supabase/client";
 
-// Session-only by design ("remember during session") — sessionStorage
-// clears when the tab/browser closes, unlike CartContext/AuthContext which
-// use localStorage for longer-lived state. Mirrors a real
-// `GET/PUT /api/users/me/location`-style API later: the shape here
-// (`{ city }`) is intentionally minimal so swapping in a server call is a
-// drop-in change.
 const LocationContext = createContext(null);
 const STORAGE_KEY = "restostack_location";
+const DEFAULT_CITY = "Mumbai";
 
 export function LocationProvider({ children }) {
   const [city, setCityState] = useState(DEFAULT_CITY);
+  const [cities, setCities] = useState([]);
   const [hydrated, setHydrated] = useState(false);
 
   useEffect(() => {
-    try {
-      const stored = sessionStorage.getItem(STORAGE_KEY);
-      if (stored && INDIAN_CITIES.some((c) => c.name === stored)) {
-        setCityState(stored);
+    async function init() {
+      const { data } = await supabase.from("cities").select("*");
+      const fetchedCities = data || [];
+      setCities(fetchedCities);
+
+      try {
+        const stored = sessionStorage.getItem(STORAGE_KEY);
+        if (stored && fetchedCities.some((c) => c.name === stored)) {
+          setCityState(stored);
+        }
+      } catch {
+        // ignore
       }
-    } catch {
-      /* ignore unavailable sessionStorage (e.g. privacy mode) */
+      setHydrated(true);
     }
-    setHydrated(true);
+    init();
   }, []);
 
   function setCity(cityName) {
@@ -31,20 +34,15 @@ export function LocationProvider({ children }) {
     try {
       sessionStorage.setItem(STORAGE_KEY, cityName);
     } catch {
-      /* ignore */
+      // ignore
     }
   }
 
-  // Restaurants actually exist for a fixed set of cities in the mock
-  // catalog; everything else in INDIAN_CITIES is selectable (a real app
-  // would just return zero results from the API) but won't have any
-  // listings — `hasCoverage` lets the UI show a friendly "not yet" state
-  // instead of pretending the catalog covers every town.
-  const cityMeta = INDIAN_CITIES.find((c) => c.name === city);
+  const cityMeta = cities.find((c) => c.name === city);
   const hasCoverage = !!cityMeta?.covered;
 
   return (
-    <LocationContext.Provider value={{ city, setCity, hasCoverage, hydrated }}>
+    <LocationContext.Provider value={{ city, setCity, hasCoverage, hydrated, cities }}>
       {children}
     </LocationContext.Provider>
   );

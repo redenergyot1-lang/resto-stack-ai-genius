@@ -1,6 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { MapPin, Search, X, Check, Navigation } from "lucide-react";
-import { INDIAN_CITIES } from "../data/cities.js";
 import { useDeliveryLocation } from "../context/LocationContext.jsx";
 
 /**
@@ -8,10 +7,10 @@ import { useDeliveryLocation } from "../context/LocationContext.jsx";
  * ReviewModal (centered overlay, click-outside-to-close, animate-fadeUp).
  * Covered cities (the 10 with real restaurants in the mock catalog) are
  * shown first so the common case is one tap away; everything else in
- * INDIAN_CITIES is still searchable/selectable.
+ * cities is still searchable/selectable.
  */
 export default function LocationModal({ onClose }) {
-  const { city, setCity } = useDeliveryLocation();
+  const { city, setCity, cities } = useDeliveryLocation();
   const [query, setQuery] = useState("");
   const [locating, setLocating] = useState(false);
   const [locateError, setLocateError] = useState("");
@@ -32,10 +31,10 @@ export default function LocationModal({ onClose }) {
   const results = useMemo(() => {
     const q = query.trim().toLowerCase();
     const list = q
-      ? INDIAN_CITIES.filter(
+      ? cities.filter(
           (c) => c.name.toLowerCase().includes(q) || c.state.toLowerCase().includes(q)
         )
-      : INDIAN_CITIES;
+      : cities;
     // Covered (serviceable) cities first, then alphabetical within each group.
     return [...list].sort((a, b) => {
       if (!!a.covered !== !!b.covered) return a.covered ? -1 : 1;

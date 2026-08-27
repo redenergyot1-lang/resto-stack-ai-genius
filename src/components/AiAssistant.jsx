@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import ReactMarkdown from "react-markdown";
 import { useNavigate } from "react-router-dom";
 import { MessageCircle, X, Send, Sparkles, Loader2 } from "lucide-react";
 import { supabase } from "../integrations/supabase/client";
@@ -52,7 +53,7 @@ export default function AiAssistant() {
     if (name === "remove_from_cart") {
       const target = items.find(
         (i) => i.id.toLowerCase() === String(args.query).toLowerCase() ||
-               i.name.toLowerCase().includes(String(args.query).toLowerCase()),
+          i.name.toLowerCase().includes(String(args.query).toLowerCase()),
       );
       if (!target) return `That item isn't in your cart.`;
       removeItem(target.id);
@@ -61,7 +62,7 @@ export default function AiAssistant() {
     if (name === "update_quantity") {
       const target = items.find(
         (i) => i.id.toLowerCase() === String(args.query).toLowerCase() ||
-               i.name.toLowerCase().includes(String(args.query).toLowerCase()),
+          i.name.toLowerCase().includes(String(args.query).toLowerCase()),
       );
       if (!target) return `That item isn't in your cart.`;
       const next = Math.max(0, target.qty + (Number(args.delta) || 0));
@@ -69,6 +70,20 @@ export default function AiAssistant() {
       return next ? `Updated ${target.name} to ${next}.` : `Removed ${target.name}.`;
     }
     if (name === "clear_cart") { clearCart(); return `Cart cleared.`; }
+    if (name === "search_dishes") {
+      const q = String(args.query || "").toLowerCase();
+      const matches = [];
+      for (const r of restaurants) {
+        for (const d of r.menu || []) {
+           if (d.name.toLowerCase().includes(q) || d.category.toLowerCase().includes(q) || r.name.toLowerCase().includes(q) || (r.cuisines || []).some(c => c.toLowerCase().includes(q))) {
+              matches.push({ r, d });
+           }
+        }
+      }
+      if (!matches.length) return `I couldn't find any dishes matching "${args.query}".`;
+      const top = matches.slice(0, 5);
+      return `Here are some **${args.query}** options I found:\n\n` + top.map(m => `- **${m.d.name}** (₹${m.d.price}) at *${m.r.name}*`).join("\n");
+    }
     if (name === "navigate") {
       const t = String(args.target || "").toLowerCase();
       if (t === "cart" || t === "checkout") { navigate("/cart"); return "Opening your cart."; }
@@ -165,11 +180,10 @@ export default function AiAssistant() {
             {messages.map((m, i) => (
               <div
                 key={i}
-                className={`max-w-[85%] px-3.5 py-2.5 rounded-2xl text-sm leading-relaxed ${
-                  m.role === "user"
+                className={`max-w-[85%] px-3.5 py-2.5 rounded-2xl text-sm leading-relaxed ${m.role === "user"
                     ? "ml-auto bg-gold-500 text-cream-50 rounded-br-md whitespace-pre-wrap"
                     : "bg-cream-50 text-ink-700 border border-cream-200 rounded-bl-md"
-                }`}
+                  }`}
               >
                 {m.role === "user" ? (
                   m.content
