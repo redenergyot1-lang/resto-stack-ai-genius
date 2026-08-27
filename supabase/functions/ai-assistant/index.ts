@@ -39,12 +39,13 @@ Deno.serve(async (req) => {
   try {
     const { messages, context } = (await req.json()) as ChatBody;
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
-    if (!LOVABLE_API_KEY) {
-      return new Response(JSON.stringify({ error: "LOVABLE_API_KEY missing" }), {
+    if (!LOVABLE_API_KEY && !Deno.env.get("OPENAI_API_KEY")) {
+      return new Response(JSON.stringify({ error: "No AI key configured (OPENAI_API_KEY / LOVABLE_API_KEY)" }), {
         status: 500,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
+
 
     const tools = [
       {
@@ -117,24 +118,45 @@ Deno.serve(async (req) => {
       ...messages,
     ];
 
-    const res = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${LOVABLE_API_KEY}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        model: "openai/gpt-5.4-mini",
-        messages: fullMessages,
-        tools,
-        tool_choice: "auto",
-      }),
-    });
+    // Prefer the user's own OpenAI key (server-side only); fall back to the Lovable AI Gateway.
+    const OPENAI_API_KEY = Deno.env.get("OPENAI_API_KEY");
+
+    const callModel = (viaOpenAI: boolean) =>
+      fetch(
+        viaOpenAI
+          ? "https://api.openai.com/v1/chat/completions"
+          : "https://ai.gateway.lovable.dev/v1/chat/completions",
+        {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${viaOpenAI ? OPENAI_API_KEY : LOVABLE_API_KEY}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            model: viaOpenAI ? "gpt-4o-mini" : "openai/gpt-5.4-mini",
+            messages: fullMessages,
+            tools,
+            tool_choice: "auto",
+            ...(viaOpenAI ? { temperature: 0.3 } : {}),
+          }),
+        },
+      );
+
+    let res = await callModel(!!OPENAI_API_KEY);
+    // If the user's OpenAI key is out of quota / unauthorized, fall back to the gateway.
+    if (OPENAI_API_KEY && !res.ok && [401, 402, 403, 429].includes(res.status) && LOVABLE_API_KEY) {
+      console.error("OpenAI call failed, falling back to Lovable AI Gateway:", res.status);
+      res = await callModel(false);
+    }
+
+
 
     if (!res.ok) {
       const text = await res.text();
+      console.error("AI upstream error", res.status, text);
       if (res.status === 429)
-        return new Response(JSON.stringify({ error: "Rate limit — please retry shortly." }), {
+        return new Response(JSON.stringify({ error: `Rate limit / quota: ${text.slice(0, 300)}` }), {
+
           status: 429,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
