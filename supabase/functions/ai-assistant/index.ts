@@ -144,8 +144,10 @@ Deno.serve(async (req) => {
 
     if (!res.ok) {
       const text = await res.text();
+      console.error("AI upstream error", res.status, text);
       if (res.status === 429)
-        return new Response(JSON.stringify({ error: "Rate limit — please retry shortly." }), {
+        return new Response(JSON.stringify({ error: `Rate limit / quota: ${text.slice(0, 300)}` }), {
+
           status: 429,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
