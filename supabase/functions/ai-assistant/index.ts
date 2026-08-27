@@ -39,12 +39,13 @@ Deno.serve(async (req) => {
   try {
     const { messages, context } = (await req.json()) as ChatBody;
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
-    if (!LOVABLE_API_KEY) {
-      return new Response(JSON.stringify({ error: "LOVABLE_API_KEY missing" }), {
+    if (!LOVABLE_API_KEY && !Deno.env.get("OPENAI_API_KEY")) {
+      return new Response(JSON.stringify({ error: "No AI key configured (OPENAI_API_KEY / LOVABLE_API_KEY)" }), {
         status: 500,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
+
 
     const tools = [
       {
